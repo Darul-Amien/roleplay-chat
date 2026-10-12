@@ -1,12 +1,15 @@
 <!DOCTYPE html>
-<html lang="id" class="dark">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grup Roleplay</title>
+    <script>try { if (localStorage.getItem('wa_rp_theme') === 'dark') document.documentElement.classList.add('dark'); } catch (e) { }</script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
+        const c = n => `rgb(var(--${n}) / <alpha-value>)`;
+        const scale = (p, keys) => Object.fromEntries(keys.map(k => [k, c(p + k)]));
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -15,129 +18,222 @@
                         wa: {
                             green: '#00a884',
                             lightGreen: '#008069',
-                            darkBg: '#111b21',
-                            darkHeader: '#202c33',
-                            darkBubbleOut: '#005c4b',
-                            darkBubbleIn: '#202c33'
-                        }
+                            darkBg: c('wa-bg'),
+                            darkHeader: c('wa-header'),
+                            darkBubbleOut: c('wa-out'),
+                            darkBubbleIn: c('wa-in')
+                        },
+                        gray: scale('g', [100, 200, 300, 400, 500, 600, 700, 800, 900]),
+                        indigo: scale('i', [100, 200, 300, 400, 500, 600, 700, 800, 900, 950]),
+                        emerald: scale('e', [100, 400, 800, 900, 950]),
+                        red: scale('r', [100, 200, 400, 800, 900, 950])
                     }
                 }
             }
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        /* ---------- Tema (terang = bawaan, gelap = html.dark) ---------- */
+        :root {
+            color-scheme: light;
+            --wa-bg: 255 255 255; --wa-header: 255 255 255; --wa-out: 217 253 211; --wa-in: 255 255 255;
+            --wa-wall: 239 234 226; --wa-rail: 240 242 245; --wa-field: 240 242 245;
+            --wa-sys-bg: 255 242 199; --wa-sys-fg: 84 101 111; --wa-chip: 255 255 255;
+            --hover: 245 246 246; --active: 240 242 245; --line: 233 237 239; --quote: rgba(11,20,26,.06);
+            --g100: 17 27 33; --g200: 59 74 84; --g300: 84 101 111; --g400: 102 119 129; --g500: 134 150 160;
+            --g600: 174 186 193; --g700: 209 215 219; --g800: 233 237 239; --g900: 240 242 245;
+            --i100: 0 59 48; --i200: 0 77 64; --i300: 0 104 85; --i400: 0 128 105; --i500: 6 207 156;
+            --i600: 0 168 132; --i700: 0 128 105; --i800: 167 230 190; --i900: 217 253 211; --i950: 217 253 211;
+            --e100: 6 78 59; --e400: 0 168 132; --e800: 167 243 208; --e900: 187 247 208; --e950: 209 250 229;
+            --r100: 127 29 29; --r200: 153 27 27; --r400: 220 38 38; --r800: 252 165 165; --r900: 254 202 202; --r950: 254 226 226;
+        }
+        html.dark {
+            color-scheme: dark;
+            --wa-bg: 17 27 33; --wa-header: 32 44 51; --wa-out: 0 92 75; --wa-in: 32 44 51;
+            --wa-wall: 11 20 26; --wa-rail: 24 34 41; --wa-field: 42 57 66;
+            --wa-sys-bg: 24 34 41; --wa-sys-fg: 255 210 121; --wa-chip: 24 34 41;
+            --hover: 32 44 51; --active: 42 57 66; --line: 34 45 52; --quote: rgba(0,0,0,.22);
+            --g100: 233 237 239; --g200: 209 215 219; --g300: 174 186 193; --g400: 134 150 160; --g500: 102 119 129;
+            --g600: 84 101 111; --g700: 47 62 71; --g800: 34 45 52; --g900: 17 27 33;
+            --i100: 217 253 211; --i200: 167 230 190; --i300: 111 214 160; --i400: 37 211 102; --i500: 6 207 156;
+            --i600: 0 168 132; --i700: 0 128 105; --i800: 0 92 75; --i900: 11 68 58; --i950: 6 46 40;
+            --e100: 209 250 229; --e400: 37 211 102; --e800: 6 95 70; --e900: 6 78 59; --e950: 2 44 34;
+            --r100: 254 226 226; --r200: 254 202 202; --r400: 248 113 113; --r800: 153 27 27; --r900: 127 29 29; --r950: 69 10 10;
+        }
+
+        body { font-family: 'Segoe UI', 'Helvetica Neue', Helvetica, 'Lucida Grande', Arial, Ubuntu, Cantarell, 'Fira Sans', sans-serif; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(120,120,120,.3); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(120,120,120,.5); }
+
+        /* ---------- Wallpaper ---------- */
         .chat-bg-pattern {
-            background-color: #0b141a;
-            background-image: radial-gradient(#1f2c34 1px, transparent 0);
-            background-size: 24px 24px;
+            background-color: rgb(var(--wa-wall));
+            background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='220'%20height='220'%20viewBox='0%200%20220%20220'%20fill='none'%20stroke='%23000'%20stroke-opacity='.06'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='30'%20cy='28'%20r='9'/%3E%3Cpath%20d='M80%2022l10%2018%2010-18z'/%3E%3Cpath%20d='M140%2030c6-10%2018-10%2024%200s18%2010%2024%200'/%3E%3Crect%20x='22'%20y='84'%20width='22'%20height='16'%20rx='4'/%3E%3Cpath%20d='M96%2092h22M107%2081v22'/%3E%3Cpath%20d='M160%2080a14%2014%200%201%200%2014%2014%2010%2010%200%200%201-14-14z'/%3E%3Cpath%20d='M30%20150q12-18%2024%200t24%200'/%3E%3Ccircle%20cx='120'%20cy='150'%20r='4'/%3E%3Ccircle%20cx='140'%20cy='164'%20r='4'/%3E%3Cpath%20d='M182%20140l4%209%2010%201-8%207%203%2010-9-5-9%205%203-10-8-7%2010-1z'/%3E%3Cpath%20d='M60%20200l8-14%208%2014z'/%3E%3Ccircle%20cx='170'%20cy='200'%20r='9'/%3E%3C/svg%3E");
+            background-size: 220px 220px;
         }
-        .field { width: 100%; background: #111b21; border: 1px solid #374151; border-radius: .5rem; padding: .5rem .75rem; font-size: .75rem; color: #f3f4f6; outline: none; }
-        .field:focus { border-color: #6366f1; }
-        .lbl { display: block; font-size: .75rem; color: #9ca3af; margin-bottom: .25rem; }
-        .hint { font-size: 10px; color: #6b7280; margin-top: .25rem; line-height: 1.4; }
+        html.dark .chat-bg-pattern { background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='220'%20height='220'%20viewBox='0%200%20220%20220'%20fill='none'%20stroke='%23fff'%20stroke-opacity='.045'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='30'%20cy='28'%20r='9'/%3E%3Cpath%20d='M80%2022l10%2018%2010-18z'/%3E%3Cpath%20d='M140%2030c6-10%2018-10%2024%200s18%2010%2024%200'/%3E%3Crect%20x='22'%20y='84'%20width='22'%20height='16'%20rx='4'/%3E%3Cpath%20d='M96%2092h22M107%2081v22'/%3E%3Cpath%20d='M160%2080a14%2014%200%201%200%2014%2014%2010%2010%200%200%201-14-14z'/%3E%3Cpath%20d='M30%20150q12-18%2024%200t24%200'/%3E%3Ccircle%20cx='120'%20cy='150'%20r='4'/%3E%3Ccircle%20cx='140'%20cy='164'%20r='4'/%3E%3Cpath%20d='M182%20140l4%209%2010%201-8%207%203%2010-9-5-9%205%203-10-8-7%2010-1z'/%3E%3Cpath%20d='M60%20200l8-14%208%2014z'/%3E%3Ccircle%20cx='170'%20cy='200'%20r='9'/%3E%3C/svg%3E"); }
+
+        /* ---------- Kolom ikon kiri ---------- */
+        .rail { background: rgb(var(--wa-rail)); }
+        .rail-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: rgb(var(--g300)); font-size: 18px; transition: background .15s; }
+        .rail-btn:hover { background: rgb(var(--g700) / .5); }
+        .rail-btn.on { background: rgb(var(--g700) / .7); }
+
+        /* ---------- Daftar obrolan ---------- */
+        .search-box { background: rgb(var(--wa-field)); }
+        .chip { padding: 5px 12px; border-radius: 999px; font-size: 14px; line-height: 20px; color: rgb(var(--g400)); border: 1px solid rgb(var(--line)); background: transparent; transition: background .15s; }
+        .chip:hover { background: rgb(var(--hover)); }
+        .chip.on { background: rgb(var(--i900)); color: rgb(var(--i400)); border-color: transparent; }
+        .li { position: relative; display: flex; align-items: center; gap: 15px; padding: 0 15px; height: 72px; cursor: pointer; }
+        .li:hover { background: rgb(var(--hover)); }
+        .li.on { background: rgb(var(--active)); }
+        .li::after { content: ''; position: absolute; left: 79px; right: 0; bottom: 0; height: 1px; background: rgb(var(--line)); }
+        .li-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+
+        /* ---------- Gelembung chat ---------- */
+        .bub { position: relative; border-radius: 8px; padding: 6px 8px 6px 9px; font-size: 14.2px; line-height: 19px; color: rgb(var(--g100)); box-shadow: 0 1px .5px rgba(11,20,26,.13); min-width: 0; }
+        .bub-out { background: rgb(var(--wa-out)); }
+        .bub-in { background: rgb(var(--wa-in)); }
+        .bub-out.tail { border-top-right-radius: 0; }
+        .bub-in.tail { border-top-left-radius: 0; }
+        .bub-out.tail::after { content: ''; position: absolute; top: 0; right: -8px; width: 8px; height: 13px; background: rgb(var(--wa-out)); clip-path: polygon(0 0, 100% 0, 0 100%); }
+        .bub-in.tail::before { content: ''; position: absolute; top: 0; left: -8px; width: 8px; height: 13px; background: rgb(var(--wa-in)); clip-path: polygon(0 0, 100% 0, 100% 100%); }
+        .bub-name { font-size: 12.8px; font-weight: 500; line-height: 20px; }
+        .bub-text { white-space: pre-wrap; overflow-wrap: anywhere; display: flow-root; }
+        .bub-meta { float: right; margin: 6px 0 -3px 12px; font-size: 11px; line-height: 15px; color: rgb(var(--g400)); display: inline-flex; align-items: center; gap: 3px; user-select: none; }
+        .quote { background: var(--quote); }
+        .date-chip { background: rgb(var(--wa-chip)); color: rgb(var(--g400)); font-size: 12.5px; padding: 5px 12px; border-radius: 8px; box-shadow: 0 1px .5px rgba(11,20,26,.13); }
+        .sys-chip { background: rgb(var(--wa-sys-bg)); color: rgb(var(--wa-sys-fg)); font-size: 12.5px; padding: 6px 12px; border-radius: 8px; box-shadow: 0 1px .5px rgba(11,20,26,.13); }
+
+        /* ---------- Form & tombol ---------- */
+        .field { width: 100%; background: rgb(var(--wa-field)); border: 1px solid rgb(var(--g700)); border-radius: .5rem; padding: .5rem .75rem; font-size: .75rem; color: rgb(var(--g100)); outline: none; }
+        .field:focus { border-color: rgb(var(--i600)); }
+        .lbl { display: block; font-size: .75rem; color: rgb(var(--g400)); margin-bottom: .25rem; }
+        .hint { font-size: 10px; color: rgb(var(--g500)); margin-top: .25rem; line-height: 1.4; }
         .btn { font-size: .75rem; font-weight: 500; padding: .45rem .8rem; border-radius: .5rem; transition: background .15s; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; }
-        .btn-primary { background: #4f46e5; color: #fff; }
-        .btn-primary:hover { background: #6366f1; }
-        .btn-ghost { background: #111b21; color: #d1d5db; border: 1px solid #374151; }
-        .btn-ghost:hover { background: #1f2c34; }
-        @keyframes flash { 0%,100% { background: transparent; } 30% { background: rgba(99,102,241,.28); } }
+        .btn-primary { background: rgb(var(--i600)); color: #fff; }
+        .btn-primary:hover { background: rgb(var(--i700)); }
+        .btn-ghost { background: rgb(var(--wa-bg)); color: rgb(var(--g300)); border: 1px solid rgb(var(--g700)); }
+        .btn-ghost:hover { background: rgb(var(--g800)); }
+        @keyframes flash { 0%,100% { background: transparent; } 30% { background: rgba(0,168,132,.28); } }
         .flash { animation: flash 1.3s ease-in-out; border-radius: .75rem; }
         #userInput { max-height: 120px; }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 antialiased">
 
-<div id="app" class="flex flex-col h-[100dvh] w-full max-w-[1600px] mx-auto shadow-2xl relative overflow-hidden">
+<div id="app" class="flex h-[100dvh] w-full max-w-[1600px] mx-auto shadow-2xl relative overflow-hidden bg-wa-darkBg">
 
-    <!-- HEADER -->
-    <header class="bg-wa-darkHeader text-gray-200 h-16 px-3 sm:px-4 flex items-center justify-between border-b border-gray-800 shrink-0 z-10">
-        <button id="btnGroupInfo" class="flex items-center gap-3 min-w-0 text-left" aria-label="Kelola karakter">
-            <div class="relative shrink-0">
-                <img id="groupAvatar" class="w-10 h-10 rounded-full object-cover border border-gray-700" alt="">
-                <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-wa-darkHeader rounded-full"></span>
-            </div>
-            <div class="min-w-0">
-                <h1 id="groupNameDisplay" class="font-semibold text-base text-gray-100 leading-tight truncate"></h1>
-                <p id="groupSubtext" class="text-xs text-gray-400 truncate"></p>
-            </div>
-        </button>
-        <div class="flex items-center gap-1 sm:gap-2 shrink-0">
-            <button id="btnGdrive" title="Google Drive" class="p-2.5 rounded-full hover:bg-gray-700/50 transition" aria-label="Google Drive"><i id="gdIcon" class="fa-solid fa-cloud text-lg text-gray-500"></i></button>
-            <button id="btnSettings" title="Pengaturan & API Key" class="p-2.5 rounded-full hover:bg-gray-700/50 text-indigo-400 transition flex items-center gap-1.5 text-xs font-medium bg-indigo-950/40 border border-indigo-800/50">
-                <i class="fa-solid fa-key text-sm"></i>
-                <span id="apiKeyStatusText" class="hidden sm:inline"></span>
-            </button>
-            <button id="btnSidebar" title="Kelola karakter" class="p-2.5 rounded-full hover:bg-gray-700/50 text-gray-300 transition"><i class="fa-solid fa-users text-lg"></i></button>
-            <button id="btnExportChat" title="Ekspor chat (.txt)" class="p-2.5 rounded-full hover:bg-gray-700/50 text-gray-300 transition hidden sm:block"><i class="fa-solid fa-file-arrow-down text-lg"></i></button>
-            <button id="btnClearChat" title="Bersihkan chat" class="p-2.5 rounded-full hover:bg-gray-700/50 text-gray-300 transition"><i class="fa-solid fa-trash-can text-lg"></i></button>
+    <!-- KOLOM IKON (desktop) -->
+    <nav class="rail hidden md:flex flex-col items-center justify-between w-[64px] shrink-0 py-3 border-r border-gray-800">
+        <div class="flex flex-col items-center gap-1.5">
+            <button id="railChats" class="rail-btn on" title="Semua obrolan" aria-label="Semua obrolan"><i class="fa-solid fa-message"></i></button>
+            <button id="railChars" class="rail-btn" title="Karakter" aria-label="Karakter"><i class="fa-solid fa-users"></i></button>
         </div>
-    </header>
+        <div class="flex flex-col items-center gap-3">
+            <button id="railSettings" class="rail-btn" title="Pengaturan" aria-label="Pengaturan"><i class="fa-solid fa-gear"></i></button>
+            <img id="railAvatar" class="w-8 h-8 rounded-full object-cover" alt="">
+        </div>
+    </nav>
 
-    <div class="flex flex-1 overflow-hidden relative min-h-0">
+    <div class="relative flex flex-1 min-w-0 min-h-0">
 
-        <div id="sidebarBackdrop" class="hidden absolute inset-0 bg-black/50 z-10"></div>
+        <div id="sidebarBackdrop" class="hidden md:hidden absolute inset-0 bg-black/50 z-10"></div>
 
-        <!-- SIDEBAR -->
-        <aside id="sidebarPanel" class="absolute inset-y-0 left-0 z-20 w-full sm:w-80 md:w-96 bg-wa-darkBg border-r border-gray-800 flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out">
-            <div class="p-4 bg-wa-darkHeader border-b border-gray-800 flex justify-between items-center">
-                <h2 class="font-semibold text-base text-gray-100 flex items-center gap-2"><i class="fa-solid fa-robot text-indigo-400"></i> Kelola Karakter</h2>
-                <button id="btnCloseSidebar" class="text-gray-400 hover:text-white p-1" aria-label="Tutup"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <!-- DAFTAR OBROLAN -->
+        <aside id="sidebarPanel" class="absolute md:static inset-y-0 left-0 z-20 w-full md:w-[400px] md:min-w-[320px] md:shrink-0 bg-wa-darkBg border-r border-gray-800 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+            <div class="h-[59px] px-4 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2 min-w-0">
+                    <button id="btnCloseSidebar" class="md:hidden -ml-2 w-9 h-9 rounded-full text-gray-300 hover:bg-gray-700/40 flex items-center justify-center" aria-label="Kembali ke chat"><i class="fa-solid fa-arrow-left"></i></button>
+                    <h2 class="text-[22px] font-bold text-wa-lightGreen tracking-tight">Obrolan</h2>
+                </div>
+                <div class="flex items-center gap-0.5 shrink-0">
+                    <button id="btnGdrive" title="Google Drive" class="w-10 h-10 rounded-full hover:bg-gray-700/40 transition flex items-center justify-center" aria-label="Google Drive"><i id="gdIcon" class="fa-solid fa-cloud text-lg text-gray-500"></i></button>
+                    <button id="btnTheme" title="Ganti tema terang/gelap" class="w-10 h-10 rounded-full hover:bg-gray-700/40 text-gray-300 transition flex items-center justify-center" aria-label="Ganti tema"><i id="themeIcon" class="fa-solid fa-moon text-lg"></i></button>
+                    <button id="btnSettings" title="Pengaturan & API Key" class="h-10 min-w-[40px] px-2.5 rounded-full hover:bg-gray-700/40 text-gray-300 transition flex items-center justify-center gap-1.5 text-xs font-medium" aria-label="Pengaturan"><i class="fa-solid fa-key text-[17px]"></i><span id="apiKeyStatusText"></span></button>
+                    <button id="btnAddChar" title="Tambah karakter" class="ml-1 w-10 h-10 rounded-full bg-wa-green text-white hover:brightness-110 transition flex items-center justify-center" aria-label="Tambah karakter"><i class="fa-solid fa-user-plus"></i></button>
+                </div>
             </div>
-            <div class="flex-1 overflow-y-auto p-4 space-y-4">
-                <div class="bg-indigo-950/30 border border-indigo-800/50 rounded-xl p-3 text-xs text-indigo-200/90 leading-relaxed">
-                    <i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i>
-                    Panggil karakter dengan <strong>@Nama</strong>. Tag <strong>@semua</strong> memanggil semua karakter. Balas (reply) pesan karakter untuk memanggilnya tanpa tag. Ajari karakter dengan <strong>/ajar @Nama aturan</strong>, atau cukup beri arahan lewat chat dan simpan saran aturannya.
-                </div>
-                <button id="btnAddChar" class="btn btn-primary w-full"><i class="fa-solid fa-plus"></i> Tambah Karakter</button>
-                <div>
-                    <h3 class="text-xs font-bold tracking-wider text-gray-400 uppercase mb-2">Daftar Karakter</h3>
-                    <div id="characterListContainer" class="space-y-2"></div>
-                </div>
-                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-800">
+
+            <div class="px-3 pb-2 shrink-0">
+                <label class="search-box flex items-center gap-3 h-[35px] px-3 rounded-lg text-gray-400">
+                    <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                    <input id="listSearch" type="text" placeholder="Cari karakter" autocomplete="off" class="flex-1 min-w-0 bg-transparent outline-none text-[15px] text-gray-100 placeholder-gray-500">
+                </label>
+            </div>
+            <div id="listFilters" class="px-3 pb-2 flex gap-2 shrink-0">
+                <button type="button" class="chip on" data-filter="all">Semua</button>
+                <button type="button" class="chip" data-filter="group">Grup</button>
+                <button type="button" class="chip" data-filter="chars">Karakter</button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto min-h-0">
+                <div id="characterListContainer"></div>
+            </div>
+
+            <div class="shrink-0 border-t border-gray-800 p-3 space-y-2">
+                <p class="hint !mt-0">Ketuk karakter untuk menandainya (@Nama). <strong>@semua</strong> memanggil semua karakter. Balas pesan karakter untuk memanggilnya tanpa tag. Ajari dengan <strong>/ajar @Nama aturan</strong>. Ekspor karakter tidak menyertakan API Key.</p>
+                <div class="grid grid-cols-2 gap-2">
                     <button id="btnExportChars" class="btn btn-ghost"><i class="fa-solid fa-file-export"></i> Ekspor</button>
                     <button id="btnImportChars" class="btn btn-ghost"><i class="fa-solid fa-file-import"></i> Impor</button>
                 </div>
                 <input type="file" id="importFile" accept="application/json,.json" class="hidden">
-                <p class="hint">Ekspor karakter tidak menyertakan API Key.</p>
             </div>
         </aside>
 
         <!-- CHAT -->
-        <main class="flex-1 flex flex-col chat-bg-pattern relative min-w-0 min-h-0">
-            <div id="messagesContainer" class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-2 min-h-0" aria-live="polite"></div>
-            <button id="scrollBottomBtn" class="hidden absolute right-4 bottom-24 w-9 h-9 rounded-full bg-wa-darkHeader border border-gray-700 text-gray-300 shadow-lg hover:bg-gray-700 z-10" aria-label="Ke pesan terbaru"><i class="fa-solid fa-chevron-down"></i></button>
-
-            <div class="shrink-0 z-10 relative">
-                <div id="mentionPopup" class="hidden absolute bottom-full left-2 right-2 sm:left-4 sm:max-w-sm mb-1 bg-wa-darkHeader border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-30">
-                    <div class="px-3 py-1.5 text-[11px] font-bold text-gray-400 border-b border-gray-800 uppercase tracking-wider">Tag karakter</div>
-                    <div id="mentionList" class="max-h-48 overflow-y-auto divide-y divide-gray-800"></div>
-                </div>
-                <div id="emojiPanel" class="hidden absolute bottom-full left-2 sm:left-4 mb-1 bg-wa-darkHeader border border-gray-700 rounded-xl shadow-2xl p-2 grid grid-cols-8 gap-1 z-30 text-xl"></div>
-
-                <div id="replyBar" class="hidden bg-wa-darkHeader border-t border-gray-800 px-3 pt-2">
-                    <div class="flex items-start gap-2 bg-black/20 rounded-lg border-l-4 px-3 py-1.5" id="replyBarInner">
-                        <div class="min-w-0 flex-1">
-                            <div id="replyBarName" class="text-[11px] font-semibold"></div>
-                            <div id="replyBarText" class="text-[11px] text-gray-300/80 truncate"></div>
+        <section class="flex-1 flex flex-col min-w-0 min-h-0">
+            <header class="h-[59px] px-3 sm:px-4 flex items-center justify-between bg-wa-darkHeader border-b border-gray-800 shrink-0 z-10">
+                <div class="flex items-center gap-1 min-w-0">
+                    <button id="btnSidebar" class="md:hidden -ml-1 w-9 h-9 rounded-full text-gray-300 hover:bg-gray-700/40 flex items-center justify-center" aria-label="Daftar obrolan"><i class="fa-solid fa-arrow-left"></i></button>
+                    <button id="btnGroupInfo" class="flex items-center gap-3 min-w-0 text-left" aria-label="Info grup">
+                        <img id="groupAvatar" class="w-10 h-10 rounded-full object-cover shrink-0" alt="">
+                        <div class="min-w-0">
+                            <h1 id="groupNameDisplay" class="font-medium text-[16px] text-gray-100 leading-tight truncate"></h1>
+                            <p id="groupSubtext" class="text-[13px] text-gray-400 truncate"></p>
                         </div>
-                        <button id="btnCancelReply" class="text-gray-400 hover:text-white" aria-label="Batalkan balasan"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
+                    </button>
                 </div>
+                <div class="flex items-center gap-0.5 shrink-0">
+                    <button id="btnExportChat" title="Ekspor chat (.txt)" class="w-10 h-10 rounded-full hover:bg-gray-700/40 text-gray-300 transition flex items-center justify-center" aria-label="Ekspor chat"><i class="fa-solid fa-file-arrow-down text-lg"></i></button>
+                    <button id="btnClearChat" title="Bersihkan chat" class="w-10 h-10 rounded-full hover:bg-gray-700/40 text-gray-300 transition flex items-center justify-center" aria-label="Bersihkan chat"><i class="fa-solid fa-trash-can text-lg"></i></button>
+                </div>
+            </header>
 
-                <footer class="bg-wa-darkHeader p-2.5 sm:p-3 flex items-end gap-2 border-t border-gray-800">
-                    <button id="btnEmoji" class="p-2 text-gray-400 hover:text-gray-200 transition text-lg rounded-full" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>
-                    <textarea id="userInput" rows="1" placeholder="Ketik pesan... gunakan @Nama karakter" class="flex-1 resize-none bg-wa-darkBg text-gray-100 placeholder-gray-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none border border-transparent focus:border-indigo-600 transition"></textarea>
-                    <button id="btnSend" class="bg-indigo-600 hover:bg-indigo-500 text-white w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition shadow-md" aria-label="Kirim"><i class="fa-solid fa-paper-plane text-sm"></i></button>
-                </footer>
-            </div>
-        </main>
+            <main class="flex-1 flex flex-col chat-bg-pattern relative min-w-0 min-h-0">
+                <div id="messagesContainer" class="flex-1 overflow-y-auto px-3 sm:px-[6%] py-3 space-y-2 min-h-0" aria-live="polite"></div>
+                <button id="scrollBottomBtn" class="hidden absolute right-4 bottom-20 w-9 h-9 rounded-full bg-wa-darkHeader border border-gray-700 text-gray-300 shadow-lg hover:bg-gray-800 z-10" aria-label="Ke pesan terbaru"><i class="fa-solid fa-chevron-down"></i></button>
+
+                <div class="shrink-0 z-10 relative">
+                    <div id="mentionPopup" class="hidden absolute bottom-full left-2 right-2 sm:left-4 sm:max-w-sm mb-1 bg-wa-darkHeader border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-30">
+                        <div class="px-3 py-1.5 text-[11px] font-bold text-gray-400 border-b border-gray-800 uppercase tracking-wider">Tag karakter</div>
+                        <div id="mentionList" class="max-h-48 overflow-y-auto divide-y divide-gray-800"></div>
+                    </div>
+                    <div id="emojiPanel" class="hidden absolute bottom-full left-2 sm:left-4 mb-1 bg-wa-darkHeader border border-gray-700 rounded-xl shadow-2xl p-2 grid grid-cols-8 gap-1 z-30 text-xl"></div>
+
+                    <div id="replyBar" class="hidden bg-wa-darkHeader border-t border-gray-800 px-3 pt-2 pb-2">
+                        <div class="quote flex items-start gap-2 rounded-lg border-l-4 px-3 py-1.5" id="replyBarInner">
+                            <div class="min-w-0 flex-1">
+                                <div id="replyBarName" class="text-[12px] font-medium"></div>
+                                <div id="replyBarText" class="text-[12px] text-gray-300/80 truncate"></div>
+                            </div>
+                            <button id="btnCancelReply" class="text-gray-400 hover:text-gray-100" aria-label="Batalkan balasan"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+
+                    <footer class="px-3 sm:px-4 py-2.5 flex items-end gap-2">
+                        <div class="flex-1 min-w-0 flex items-end gap-1 rounded-[24px] bg-wa-darkHeader shadow-sm pl-2 pr-1.5 py-1.5">
+                            <button id="btnEmoji" class="w-10 h-10 shrink-0 rounded-full text-gray-300 hover:bg-gray-700/30 text-[22px] flex items-center justify-center transition" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>
+                            <textarea id="userInput" rows="1" placeholder="Ketik pesan... gunakan @Nama karakter" class="flex-1 min-w-0 resize-none bg-transparent text-gray-100 placeholder-gray-500 px-1 py-2.5 text-[15px] leading-5 focus:outline-none"></textarea>
+                            <button id="btnSend" class="bg-indigo-600 hover:bg-indigo-500 text-white w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition" aria-label="Kirim"><i class="fa-solid fa-paper-plane text-sm"></i></button>
+                        </div>
+                    </footer>
+                </div>
+            </main>
+        </section>
     </div>
 </div>
 
@@ -415,7 +511,9 @@ const state = {
     mention: { items: [], index: 0, open: false },
     editingCharId: null,
     draftAvatar: '',
-    tagTouched: false
+    tagTouched: false,
+    listFilter: 'all',
+    listQuery: ''
 };
 
 const $ = id => document.getElementById(id);
@@ -434,6 +532,15 @@ function escapeHtml(s) {
 function escapeRegExp(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 function sanitizeTag(s) { return String(s || '').replace(/[^A-Za-z0-9_]/g, '').slice(0, 24); }
 function validColor(c) { return /^#[0-9a-f]{6}$/i.test(c || '') ? c : '#a855f7'; }
+function isLight() { return !document.documentElement.classList.contains('dark'); }
+// Di tema terang warna nama digelapkan agar terbaca di atas putih.
+function tone(c) {
+    c = validColor(c);
+    if (!isLight()) return c;
+    const n = parseInt(c.slice(1), 16);
+    const f = x => Math.round(x * 0.72).toString(16).padStart(2, '0');
+    return '#' + f((n >> 16) & 255) + f((n >> 8) & 255) + f(n & 255);
+}
 function safeUrl(u) {
     u = String(u || '').trim();
     return /^(https?:\/\/|data:image\/)/i.test(u) ? u : '';
@@ -852,7 +959,7 @@ function formatText(raw) {
     t = t.replace(/(^|[\s(])~([^\s~](?:[^~\n]*[^\s~])?)~(?=$|[\s).,!?:;])/g, '$1<del>$2</del>');
     t = t.replace(/(^|[^\w])@(\w+)/g, (m, pre, tag) => {
         const c = findCharByTag(tag);
-        const color = c ? c.color : '#818cf8';
+        const color = tone(c ? c.color : '#3b82f6');
         return `${pre}<span class="font-semibold" style="color:${color}">@${tag}</span>`;
     });
     return t;
@@ -862,7 +969,7 @@ function formatText(raw) {
    RENDER
    ============================================================ */
 function actionsHtml(m, i, lastIdx, isBot) {
-    const b = (a, icon, title) => `<button data-action="${a}" data-id="${m.id}" title="${title}" class="w-6 h-6 rounded-full text-gray-400 hover:text-white hover:bg-gray-700/60 text-[11px]"><i class="fa-solid ${icon}"></i></button>`;
+    const b = (a, icon, title) => `<button data-action="${a}" data-id="${m.id}" title="${title}" class="w-7 h-7 rounded-full text-gray-400 hover:text-gray-100 hover:bg-gray-700/40 text-[12px]"><i class="fa-solid ${icon}"></i></button>`;
     let h = b('reply', 'fa-reply', 'Balas');
     if (isBot && i === lastIdx) h += b('regen', 'fa-rotate-right', 'Buat ulang balasan');
     h += b('delete', 'fa-trash-can', 'Hapus pesan');
@@ -870,30 +977,30 @@ function actionsHtml(m, i, lastIdx, isBot) {
 }
 function quoteHtml(rt) {
     if (!rt) return '';
-    const color = validColor(rt.color || '#818cf8');
-    return `<div data-action="jump" data-id="${escapeHtml(rt.id)}" class="cursor-pointer mb-1 border-l-4 rounded bg-black/20 px-2 py-1" style="border-color:${color}">
-        <div class="text-[11px] font-semibold" style="color:${color}">${escapeHtml(rt.name)}</div>
-        <div class="text-[11px] text-gray-300/80 line-clamp-2">${escapeHtml(rt.text)}</div></div>`;
+    const color = tone(validColor(rt.color || '#818cf8'));
+    return `<div data-action="jump" data-id="${escapeHtml(rt.id)}" class="quote cursor-pointer mb-1 border-l-4 rounded-md px-2 py-1" style="border-color:${color}">
+        <div class="text-[12.5px] font-medium" style="color:${color}">${escapeHtml(rt.name)}</div>
+        <div class="text-[13px] text-gray-300/80 line-clamp-2">${escapeHtml(rt.text)}</div></div>`;
 }
 function messageHtml(m, i, lastIdx) {
     const time = fmtTime(m.ts);
     if (m.type === 'system') {
-        return `<div class="flex justify-center" id="msg-${m.id}"><div class="bg-wa-darkHeader/90 border border-gray-800 text-gray-300 text-[11px] px-3 py-1 rounded-lg max-w-md text-center shadow whitespace-pre-line">${formatText(m.text)}</div></div>`;
+        return `<div class="flex justify-center my-1" id="msg-${m.id}"><div class="sys-chip max-w-md text-center whitespace-pre-line">${formatText(m.text)}</div></div>`;
     }
     if (m.type === 'error') {
-        return `<div class="flex justify-center" id="msg-${m.id}"><div class="bg-red-950/60 border border-red-900 text-red-200 text-[11px] px-3 py-1.5 rounded-lg max-w-md text-center shadow space-y-1">
-            <div><i class="fa-solid fa-triangle-exclamation mr-1"></i>${m.senderName ? escapeHtml(m.senderName) + ': ' : ''}${escapeHtml(m.text)}</div>
-            ${m.retryCharId ? `<button data-action="retry" data-id="${m.id}" class="underline hover:text-white">Coba lagi</button>` : ''}</div></div>`;
+        return `<div class="flex justify-center my-1" id="msg-${m.id}"><div class="bg-red-950/60 border border-red-900 text-red-200 text-[12px] px-3 py-1.5 rounded-lg max-w-md text-center shadow-sm space-y-1">
+            <div class="break-words"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${m.senderName ? escapeHtml(m.senderName) + ': ' : ''}${escapeHtml(m.text)}</div>
+            ${m.retryCharId ? `<button data-action="retry" data-id="${m.id}" class="underline hover:text-red-100">Coba lagi</button>` : ''}</div></div>`;
     }
     if (m.type === 'ruleSuggest') {
         const ids = (m.charIds || []).map(findCharById).filter(Boolean);
         const names = ids.map(c => c.name).join(', ');
         if (m.status === 'saved') {
-            return `<div class="flex justify-center" id="msg-${m.id}"><div class="bg-emerald-950/50 border border-emerald-900 text-emerald-100 text-[11px] px-3 py-1.5 rounded-lg max-w-md shadow">
+            return `<div class="flex justify-center my-1" id="msg-${m.id}"><div class="bg-emerald-950/50 border border-emerald-900 text-emerald-100 text-[12px] px-3 py-1.5 rounded-lg max-w-md shadow-sm">
                 <div class="font-semibold"><i class="fa-solid fa-graduation-cap mr-1"></i>Aturan disimpan untuk ${escapeHtml(m.savedTo || '')}</div>
                 <div class="whitespace-pre-wrap text-emerald-100/80 mt-0.5">${escapeHtml(m.text)}</div></div></div>`;
         }
-        return `<div class="flex justify-center" id="msg-${m.id}"><div class="bg-indigo-950/60 border border-indigo-800 text-indigo-100 text-[11px] px-3 py-2 rounded-lg w-full max-w-md shadow space-y-2">
+        return `<div class="flex justify-center my-1" id="msg-${m.id}"><div class="bg-indigo-950/60 border border-indigo-800 text-indigo-100 text-[12px] px-3 py-2 rounded-lg w-full max-w-md shadow-sm space-y-2">
             <div class="font-semibold"><i class="fa-solid fa-graduation-cap mr-1"></i>Jadikan aturan tetap? <span class="font-normal text-indigo-200/70">(satu aturan per baris, boleh diedit)</span></div>
             <textarea data-rule-edit="${m.id}" rows="2" class="field resize-y">${escapeHtml(m.text)}</textarea>
             <div class="flex flex-wrap gap-1.5">
@@ -902,15 +1009,16 @@ function messageHtml(m, i, lastIdx) {
                 <button data-action="rule-dismiss" data-id="${m.id}" class="btn btn-ghost">Abaikan</button>
             </div></div></div>`;
     }
+    const prev = state.chat[i - 1];
     if (m.type === 'user') {
         const ticks = m.status === 'read' ? '<i class="fa-solid fa-check-double text-[#53bdeb]"></i>'
-            : m.status === 'delivered' ? '<i class="fa-solid fa-check-double text-gray-300/70"></i>'
-            : '<i class="fa-solid fa-check text-gray-300/70"></i>';
-        return `<div class="group flex justify-end items-end gap-1" id="msg-${m.id}">${actionsHtml(m, i, lastIdx, false)}
-            <div class="bg-wa-darkBubbleOut text-gray-100 rounded-xl rounded-tr-none px-3 py-1.5 max-w-[82%] sm:max-w-md shadow-md text-xs">
+            : m.status === 'delivered' ? '<i class="fa-solid fa-check-double"></i>'
+            : '<i class="fa-solid fa-check"></i>';
+        const cont = prev && prev.type === 'user' && dayKey(prev.ts) === dayKey(m.ts);
+        return `<div class="group flex justify-end items-end gap-1 ${cont ? '!mt-0.5' : ''}" id="msg-${m.id}">${actionsHtml(m, i, lastIdx, false)}
+            <div class="bub bub-out ${cont ? '' : 'tail'} max-w-[85%] sm:max-w-[65%]">
                 ${quoteHtml(m.replyTo)}
-                <div class="whitespace-pre-wrap break-words leading-relaxed">${formatText(m.text)}</div>
-                <div class="text-[10px] text-emerald-100/60 text-right mt-0.5 flex items-center justify-end gap-1"><span>${time}</span>${ticks}</div>
+                <div class="bub-text">${formatText(m.text)}<span class="bub-meta"><span>${time}</span>${ticks}</span></div>
             </div></div>`;
     }
     // bot
@@ -918,24 +1026,22 @@ function messageHtml(m, i, lastIdx) {
     const name = ch ? ch.name : (m.senderName || 'AI');
     const color = ch ? ch.color : validColor(m.senderColor || '#38bdf8');
     const avatar = ch ? ch.avatar : m.senderAvatar;
-    const prev = state.chat[i - 1];
     const cont = prev && prev.type === 'bot' && prev.senderId === m.senderId && dayKey(prev.ts) === dayKey(m.ts);
     const avatarHtml = cont ? '<div class="w-7 shrink-0"></div>' : imgTag(avatar, name, color, 'w-7 h-7 rounded-full object-cover shrink-0 mt-1');
     return `<div class="group flex items-end gap-1 ${cont ? '!mt-0.5' : ''}" id="msg-${m.id}">
-        <div class="flex gap-2 max-w-[85%] sm:max-w-md">${avatarHtml}
-            <div class="bg-wa-darkBubbleIn text-gray-100 rounded-xl ${cont ? '' : 'rounded-tl-none'} px-3 py-1.5 shadow-md text-xs border border-gray-800/50 min-w-0">
-                ${cont ? '' : `<div class="font-bold text-[11px] mb-0.5" style="color:${color}">${escapeHtml(name)}</div>`}
+        <div class="flex gap-2.5 min-w-0 max-w-[88%] sm:max-w-[70%]">${avatarHtml}
+            <div class="bub bub-in ${cont ? '' : 'tail'}">
+                ${cont ? '' : `<div class="bub-name" style="color:${tone(color)}">${escapeHtml(name)}</div>`}
                 ${quoteHtml(m.replyTo)}
-                <div class="whitespace-pre-wrap break-words leading-relaxed">${formatText(m.text)}</div>
-                <div class="text-[10px] text-gray-400 text-right mt-0.5">${time}</div>
+                <div class="bub-text">${formatText(m.text)}<span class="bub-meta">${time}</span></div>
             </div></div>${actionsHtml(m, i, lastIdx, true)}</div>`;
 }
 function typingHtml(ch) {
     const dot = d => `<span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay:${d}s"></span>`;
-    return `<div class="flex items-end gap-2">${imgTag(ch.avatar, ch.name, ch.color, 'w-7 h-7 rounded-full object-cover shrink-0')}
-        <div class="bg-wa-darkBubbleIn border border-gray-800/50 rounded-xl rounded-tl-none px-3 py-1.5 shadow-md">
-            <div class="font-bold text-[11px] mb-0.5" style="color:${ch.color}">${escapeHtml(ch.name)}</div>
-            <span class="inline-flex gap-1 items-center h-3">${dot(0)}${dot(0.2)}${dot(0.4)}</span>
+    return `<div class="flex items-start gap-2.5">${imgTag(ch.avatar, ch.name, ch.color, 'w-7 h-7 rounded-full object-cover shrink-0 mt-1')}
+        <div class="bub bub-in tail">
+            <div class="bub-name" style="color:${tone(ch.color)}">${escapeHtml(ch.name)}</div>
+            <span class="inline-flex gap-1 items-center h-4">${dot(0)}${dot(0.2)}${dot(0.4)}</span>
         </div></div>`;
 }
 function renderMessages(forceScroll = false) {
@@ -948,7 +1054,7 @@ function renderMessages(forceScroll = false) {
     state.chat.forEach((m, i) => {
         const d = dayKey(m.ts);
         if (d !== lastDay) {
-            html += `<div class="flex justify-center my-2"><span class="bg-wa-darkHeader/90 border border-gray-800 text-gray-300 text-[11px] px-3 py-1 rounded-lg shadow">${escapeHtml(dayLabel(m.ts))}</span></div>`;
+            html += `<div class="flex justify-center my-2"><span class="date-chip">${escapeHtml(dayLabel(m.ts))}</span></div>`;
             lastDay = d;
         }
         html += messageHtml(m, i, lastIdx);
@@ -957,6 +1063,7 @@ function renderMessages(forceScroll = false) {
     c.innerHTML = html;
     c.scrollTop = (forceScroll || nearBottom) ? c.scrollHeight : prevTop;
     updateScrollBtn();
+    renderCharacterList();
 }
 function updateScrollBtn() {
     const c = $('messagesContainer');
@@ -977,11 +1084,12 @@ function updateHeader() {
     const ga = $('groupAvatar');
     ga.dataset.fb = `${s.groupName || 'G'}|#475569`;
     ga.src = safeUrl(s.groupAvatar) || initialsAvatar(s.groupName || 'G', '#475569');
-    const st = $('apiKeyStatusText');
-    st.textContent = s.apiKey ? 'Pengaturan' : 'Set API Key';
+    $('apiKeyStatusText').textContent = s.apiKey ? '' : 'Set API Key';
     $('btnSettings').classList.toggle('animate-pulse', !s.apiKey);
+    const ra = $('railAvatar');
+    if (ra) { ra.dataset.fb = `${s.userName || 'K'}|#6b7c85`; ra.src = initialsAvatar(s.userName || 'K', '#6b7c85'); }
     $('userInput').placeholder = state.characters.length
-        ? `Ketik pesan... gunakan @${state.characters[0].tag}` : 'Tambahkan karakter lewat ikon grup';
+        ? `Ketik pesan... gunakan @${state.characters[0].tag}` : 'Tambahkan karakter lewat tombol hijau di daftar obrolan';
 }
 function updateSendButton() {
     const b = $('btnSend');
@@ -992,26 +1100,58 @@ function updateSendButton() {
     b.classList.toggle('hover:bg-indigo-500', !state.busy);
     b.setAttribute('aria-label', state.busy ? 'Hentikan' : 'Kirim');
 }
+function lastPreview() {
+    for (let i = state.chat.length - 1; i >= 0; i--) {
+        const m = state.chat[i];
+        if (m.type === 'user') return { who: 'Kamu', text: m.text, ts: m.ts };
+        if (m.type === 'bot') return { who: speakerName(m), text: m.text, ts: m.ts };
+    }
+    return null;
+}
+function setListFilter(f) {
+    state.listFilter = f;
+    document.querySelectorAll('#listFilters [data-filter]').forEach(b => b.classList.toggle('on', b.dataset.filter === f));
+    $('railChats').classList.toggle('on', f !== 'chars');
+    $('railChars').classList.toggle('on', f === 'chars');
+    renderCharacterList();
+}
 function renderCharacterList() {
     const box = $('characterListContainer');
-    if (!state.characters.length) {
-        box.innerHTML = '<div class="text-xs text-gray-500 text-center py-4">Belum ada karakter.</div>';
-        return;
+    if (!box) return;
+    const f = state.listFilter, q = String(state.listQuery || '').trim().toLowerCase();
+    const s = state.settings;
+    const gname = s.groupName || 'Grup Roleplay';
+    let html = '';
+    if ((f === 'all' || f === 'group') && (!q || gname.toLowerCase().includes(q))) {
+        const p = lastPreview();
+        const typing = state.typing;
+        const preview = typing ? `${typing.name} sedang mengetik…` : (p ? `${p.who}: ${snippet(p.text, 70)}` : 'Belum ada pesan');
+        const sub = typing ? 'text-emerald-400' : 'text-gray-400';
+        html += `<div data-char-action="open" class="li on">
+            ${imgTag(s.groupAvatar, gname, '#475569', 'w-[49px] h-[49px] rounded-full object-cover shrink-0')}
+            <div class="li-body">
+                <div class="flex items-baseline justify-between gap-2"><span class="text-[17px] text-gray-100 truncate">${escapeHtml(gname)}</span>${p ? `<span class="text-[12px] shrink-0 ${sub}">${fmtTime(p.ts)}</span>` : ''}</div>
+                <div class="text-[14px] truncate ${sub}">${escapeHtml(preview)}</div>
+            </div></div>`;
     }
-    box.innerHTML = state.characters.map(c => `
-        <div class="p-2.5 bg-wa-darkHeader rounded-lg border border-gray-800 flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2.5 overflow-hidden">
-                ${imgTag(c.avatar, c.name, c.color, 'w-9 h-9 rounded-full object-cover shrink-0')}
-                <div class="min-w-0">
-                    <div class="text-xs font-semibold truncate" style="color:${c.color}">${escapeHtml(c.name)} <span class="text-gray-500 font-normal">@${escapeHtml(c.tag)}</span>${(c.rules || []).length ? ` <span class="text-[10px] text-indigo-300/80 font-normal" title="Aturan tambahan"><i class="fa-solid fa-graduation-cap"></i> ${c.rules.length}</span>` : ''}</div>
-                    <div class="text-[10px] text-gray-400 truncate">${escapeHtml(snippet(c.prompt, 70))}</div>
+    if (f === 'all' || f === 'chars') {
+        const list = state.characters.filter(c => !q || c.name.toLowerCase().includes(q) || c.tag.toLowerCase().includes(q));
+        if (list.length) {
+            if (f === 'all') html += '<div class="px-4 pt-3 pb-1 text-[13px] font-medium text-wa-lightGreen">Karakter</div>';
+            html += list.map(c => `<div data-char-action="mention" data-tag="${escapeHtml(c.tag)}" class="li group" title="Ketuk untuk menandai @${escapeHtml(c.tag)}">
+                ${imgTag(c.avatar, c.name, c.color, 'w-[49px] h-[49px] rounded-full object-cover shrink-0')}
+                <div class="li-body">
+                    <div class="flex items-baseline gap-2 min-w-0"><span class="text-[17px] text-gray-100 truncate">${escapeHtml(c.name)}</span><span class="text-[12px] text-gray-500 shrink-0">@${escapeHtml(c.tag)}</span>${(c.rules || []).length ? `<span class="text-[11px] text-indigo-400 shrink-0" title="Aturan tambahan"><i class="fa-solid fa-graduation-cap"></i> ${c.rules.length}</span>` : ''}</div>
+                    <div class="text-[14px] text-gray-400 truncate">${escapeHtml(snippet(c.prompt, 70))}</div>
                 </div>
-            </div>
-            <div class="flex shrink-0">
-                <button data-char-action="edit" data-id="${c.id}" title="Edit" class="text-gray-400 hover:text-indigo-300 p-1.5 text-xs"><i class="fa-solid fa-pen"></i></button>
-                <button data-char-action="delete" data-id="${c.id}" title="Hapus" class="text-gray-500 hover:text-red-400 p-1.5 text-xs"><i class="fa-solid fa-trash-can"></i></button>
-            </div>
-        </div>`).join('');
+                <div class="flex shrink-0 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition">
+                    <button data-char-action="edit" data-id="${c.id}" title="Edit" class="w-8 h-8 rounded-full text-gray-400 hover:text-gray-100 hover:bg-gray-700/40 text-xs"><i class="fa-solid fa-pen"></i></button>
+                    <button data-char-action="delete" data-id="${c.id}" title="Hapus" class="w-8 h-8 rounded-full text-gray-400 hover:text-red-400 hover:bg-gray-700/40 text-xs"><i class="fa-solid fa-trash-can"></i></button>
+                </div></div>`).join('');
+        }
+    }
+    if (!html) html = `<div class="text-sm text-gray-500 text-center py-10 px-6">${state.characters.length ? 'Tidak ada hasil.' : 'Belum ada karakter. Tekan tombol hijau di atas untuk menambah.'}</div>`;
+    box.innerHTML = html;
 }
 
 /* ============================================================
@@ -1037,7 +1177,7 @@ function renderMention() {
     list.innerHTML = state.mention.items.map((it, i) => `
         <div data-mention="${i}" class="px-3 py-2 text-xs flex items-center gap-2 cursor-pointer transition ${i === state.mention.index ? 'bg-indigo-900/50' : 'hover:bg-indigo-900/30'}">
             ${imgTag(it.avatar, it.name, it.color, 'w-6 h-6 rounded-full object-cover')}
-            <div><span class="font-bold" style="color:${it.color}">@${escapeHtml(it.tag)}</span>
+            <div><span class="font-bold" style="color:${tone(it.color)}">@${escapeHtml(it.tag)}</span>
             <span class="text-gray-400 text-[10px] ml-1">${escapeHtml(it.name)}</span></div>
         </div>`).join('');
     $('mentionPopup').classList.remove('hidden');
@@ -1322,7 +1462,7 @@ async function sendUserMessage() {
         if (!targets.length) {
             msg.status = 'delivered'; persist(); renderMessages();
             if (shouldLearn(text)) maybeSuggestRule(msg, [], '');
-            toast(state.characters.length ? 'Tag karakter dengan @Nama agar ada yang membalas.' : 'Belum ada karakter. Tambahkan lewat ikon grup.');
+            toast(state.characters.length ? 'Tag karakter dengan @Nama agar ada yang membalas.' : 'Belum ada karakter. Tambahkan lewat tombol hijau di daftar obrolan.');
             return;
         }
     }
@@ -1376,9 +1516,9 @@ function startReply(id) {
         color: m.type === 'user' ? '#53bdeb' : (ch ? ch.color : validColor(m.senderColor || '#818cf8'))
     };
     $('replyBarName').textContent = state.replyTo.name;
-    $('replyBarName').style.color = state.replyTo.color;
+    $('replyBarName').style.color = tone(state.replyTo.color);
     $('replyBarText').textContent = state.replyTo.text;
-    $('replyBarInner').style.borderColor = state.replyTo.color;
+    $('replyBarInner').style.borderColor = tone(state.replyTo.color);
     $('replyBar').classList.remove('hidden');
     $('userInput').focus();
 }
@@ -1544,6 +1684,27 @@ function toggleSidebar(force) {
 function openModal(id) { $(id).classList.remove('hidden'); }
 function closeModal(id) { $(id).classList.add('hidden'); }
 function closeEmoji() { $('emojiPanel').classList.add('hidden'); }
+
+/* Tema */
+function updateThemeIcon() {
+    const i = $('themeIcon');
+    if (i) i.className = 'fa-solid ' + (isLight() ? 'fa-moon' : 'fa-sun') + ' text-lg';
+}
+function toggleTheme() {
+    const dark = document.documentElement.classList.toggle('dark');
+    try { localStorage.setItem('wa_rp_theme', dark ? 'dark' : 'light'); } catch (e) { }
+    updateThemeIcon(); updateHeader(); renderMessages();
+}
+function insertMention(tag) {
+    const ta = $('userInput');
+    const before = ta.value.slice(0, ta.selectionStart), after = ta.value.slice(ta.selectionEnd);
+    const ins = (before && !/\s$/.test(before) ? ' ' : '') + '@' + tag + ' ';
+    ta.value = before + ins + after;
+    const pos = (before + ins).length;
+    ta.setSelectionRange(pos, pos);
+    ta.focus(); autosize();
+}
+const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
 
 /* Settings */
 function openSettings() {
@@ -1725,6 +1886,7 @@ function init() {
     state.chat.forEach(m => { if (m.type === 'user') m.status = 'read'; });
 
     saveCharacters(); saveSettings();
+    updateThemeIcon();
     renderCharacterList(); updateHeader(); updateSendButton(); renderMessages(true);
 
     EMOJIS.forEach(e => {
@@ -1739,11 +1901,17 @@ function init() {
     });
 
     // header & sidebar
-    $('btnGroupInfo').addEventListener('click', () => toggleSidebar());
+    $('btnGroupInfo').addEventListener('click', () => { if (isMobile()) toggleSidebar(true); else openSettings(); });
     $('btnSidebar').addEventListener('click', () => toggleSidebar());
     $('btnCloseSidebar').addEventListener('click', () => toggleSidebar(false));
     $('sidebarBackdrop').addEventListener('click', () => toggleSidebar(false));
     $('btnSettings').addEventListener('click', openSettings);
+    $('railSettings').addEventListener('click', openSettings);
+    $('btnTheme').addEventListener('click', toggleTheme);
+    $('railChats').addEventListener('click', () => setListFilter('all'));
+    $('railChars').addEventListener('click', () => setListFilter('chars'));
+    $('listSearch').addEventListener('input', e => { state.listQuery = e.target.value; renderCharacterList(); });
+    $('listFilters').addEventListener('click', e => { const b = e.target.closest('[data-filter]'); if (b) setListFilter(b.dataset.filter); });
     gdBind();
     $('btnExportChat').addEventListener('click', exportChat);
     $('btnClearChat').addEventListener('click', clearChat);
@@ -1754,7 +1922,11 @@ function init() {
     $('characterListContainer').addEventListener('click', e => {
         const b = e.target.closest('[data-char-action]');
         if (!b) return;
-        if (b.dataset.charAction === 'edit') openCharModal(b.dataset.id); else deleteCharacter(b.dataset.id);
+        const a = b.dataset.charAction;
+        if (a === 'edit') openCharModal(b.dataset.id);
+        else if (a === 'delete') deleteCharacter(b.dataset.id);
+        else if (a === 'mention') { insertMention(b.dataset.tag); if (isMobile()) toggleSidebar(false); }
+        else if (a === 'open') { if (isMobile()) toggleSidebar(false); $('userInput').focus(); }
     });
 
     // modal umum
