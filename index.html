@@ -152,9 +152,9 @@
             <section class="space-y-3">
                 <h4 class="text-xs font-bold tracking-wider text-gray-400 uppercase">Koneksi API</h4>
                 <div>
-                    <label class="lbl" for="setApiKey">xAI API Key</label>
+                    <label class="lbl" for="setApiKey">API Key (Gemini / xAI / kompatibel OpenAI)</label>
                     <div class="flex gap-2">
-                        <input type="password" id="setApiKey" placeholder="xai-..." autocomplete="off" class="field">
+                        <input type="password" id="setApiKey" placeholder="Tempel API key di sini" autocomplete="off" class="field">
                         <button id="btnToggleKey" type="button" class="btn btn-ghost" aria-label="Tampilkan key"><i class="fa-solid fa-eye"></i></button>
                     </div>
                     <p class="hint">Key disimpan di browser ini (localStorage). Jangan bagikan file ini bersama key-nya. Untuk dipublikasikan, pakai proxy backend lewat Base URL.</p>
@@ -162,7 +162,7 @@
                 <div>
                     <label class="lbl" for="setModel">Model</label>
                     <div class="flex gap-2">
-                        <input type="text" id="setModel" list="modelList" placeholder="grok-4" class="field">
+                        <input type="text" id="setModel" list="modelList" placeholder="gemini-2.5-flash" class="field">
                         <datalist id="modelList"></datalist>
                         <button id="btnLoadModels" type="button" class="btn btn-ghost whitespace-nowrap"><i class="fa-solid fa-rotate"></i> Muat daftar</button>
                     </div>
@@ -170,7 +170,7 @@
                 </div>
                 <div>
                     <label class="lbl" for="setBaseUrl">Base URL</label>
-                    <input type="text" id="setBaseUrl" placeholder="https://api.x.ai/v1" class="field">
+                    <input type="text" id="setBaseUrl" placeholder="https://generativelanguage.googleapis.com/v1beta/openai" class="field">
                 </div>
             </section>
 
@@ -338,8 +338,8 @@ const INSTRUCTION_RE = /\b(?:jangan|harus|mulai (?:sekarang|dari|ini)|dari sekar
 
 const DEFAULT_SETTINGS = {
     apiKey: '',
-    model: 'grok-4',
-    baseUrl: 'https://api.x.ai/v1',
+    model: 'gemini-2.5-flash',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
     temperature: 0.8,
     maxTokens: 1024,
     contextMessages: 30,
@@ -1144,6 +1144,22 @@ function cleanReply(raw, char) {
 /* ============================================================
    API
    ============================================================ */
+// Gemini memberi nama model "models/gemini-..."; API chat butuh tanpa awalan.
+function normModel(m) { return String(m || '').trim().replace(/^models\//i, ''); }
+// Membaca isi error dari berbagai format (OpenAI/xAI: {error:{message}}, Gemini: [{error:{message}}], atau teks biasa).
+async function readErrorDetail(res) {
+    let text = '';
+    try { text = await res.text(); } catch (e) { }
+    let msg = '';
+    try {
+        let j = JSON.parse(text);
+        if (Array.isArray(j)) j = j[0] || {};
+        const e = j.error;
+        msg = (e && typeof e === 'object' ? (e.message || JSON.stringify(e)) : e) || j.message || '';
+    } catch (e) { msg = text; }
+    msg = String(msg || res.statusText || ('HTTP ' + res.status)).replace(/\s+/g, ' ').trim();
+    return msg.length > 300 ? msg.slice(0, 300) + '…' : msg;
+}
 class ApiError extends Error {
     constructor(msg, retry = false) { super(msg); this.retry = retry; }
 }
@@ -1163,13 +1179,12 @@ async function callApi(messages, signal, opts = {}) {
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${s.apiKey}` },
-                body: JSON.stringify({ model: s.model, messages, temperature: opts.temperature ?? s.temperature, max_tokens: opts.maxTokens ?? s.maxTokens }),
+                body: JSON.stringify({ model: normModel(s.model), messages, temperature: opts.temperature ?? s.temperature, max_tokens: opts.maxTokens ?? s.maxTokens }),
                 signal: ctrl.signal
             });
             if (!res.ok) {
-                const j = await res.json().catch(() => ({}));
-                const raw = j.error?.message || j.error || j.message || res.statusText || ('HTTP ' + res.status);
-                throw new ApiError(`Error ${res.status}: ${typeof raw === 'string' ? raw : JSON.stringify(raw)}`, [429, 500, 502, 503, 504].includes(res.status));
+                const detail = await readErrorDetail(res);
+                throw new ApiError(`Error ${res.status}: ${detail} [model: ${normModel(s.model)}, alamat: ${url}]`, [429, 500, 502, 503, 504].includes(res.status));
             }
             const data = await res.json();
             const choice = data.choices?.[0];
@@ -1544,7 +1559,7 @@ function openSettings() {
     $('tgAutoReply').checked = s.autoReplyNoTag; $('tgChain').checked = s.chainReplies;
     $('tgLearn').checked = s.learnSuggest; $('setGlobalRules').value = (s.globalRules || []).join('\n');
     const dl = $('modelList');
-    if (!dl.children.length) fillModelList(['grok-4', 'grok-3', 'grok-3-mini', s.model]);
+    if (!dl.children.length) fillModelList(['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro', s.model]);
     openModal('settingsModal');
 }
 function fillModelList(ids) {
@@ -1553,7 +1568,7 @@ function fillModelList(ids) {
 function saveSettingsFromForm() {
     const s = state.settings;
     s.apiKey = $('setApiKey').value.trim();
-    s.model = $('setModel').value.trim() || DEFAULT_SETTINGS.model;
+    s.model = normModel($('setModel').value) || DEFAULT_SETTINGS.model;
     s.baseUrl = $('setBaseUrl').value.trim() || DEFAULT_SETTINGS.baseUrl;
     if (!/^https?:\/\//i.test(s.baseUrl)) { toast('Base URL harus diawali http:// atau https://', 'error'); return; }
     s.groupName = $('setGroupName').value.trim() || DEFAULT_SETTINGS.groupName;
@@ -1579,9 +1594,9 @@ async function loadModels() {
     btn.disabled = true;
     try {
         const res = await fetch(base + '/models', { headers: { 'Authorization': `Bearer ${key}` } });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        if (!res.ok) throw new Error(`${res.status}: ${await readErrorDetail(res)}`);
         const j = await res.json();
-        const ids = (j.data || []).map(m => m.id).filter(Boolean);
+        const ids = (j.data || j.models || []).map(m => normModel(m.id || m.name)).filter(Boolean);
         if (!ids.length) throw new Error('daftar kosong');
         fillModelList(ids);
         toast(`${ids.length} model dimuat. Klik kolom Model untuk memilih.`, 'ok');
