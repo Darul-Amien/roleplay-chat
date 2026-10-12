@@ -1,0 +1,1854 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grup Roleplay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        wa: {
+                            green: '#00a884',
+                            lightGreen: '#008069',
+                            darkBg: '#111b21',
+                            darkHeader: '#202c33',
+                            darkBubbleOut: '#005c4b',
+                            darkBubbleIn: '#202c33'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(120,120,120,.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(120,120,120,.5); }
+        .chat-bg-pattern {
+            background-color: #0b141a;
+            background-image: radial-gradient(#1f2c34 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+        .field { width: 100%; background: #111b21; border: 1px solid #374151; border-radius: .5rem; padding: .5rem .75rem; font-size: .75rem; color: #f3f4f6; outline: none; }
+        .field:focus { border-color: #6366f1; }
+        .lbl { display: block; font-size: .75rem; color: #9ca3af; margin-bottom: .25rem; }
+        .hint { font-size: 10px; color: #6b7280; margin-top: .25rem; line-height: 1.4; }
+        .btn { font-size: .75rem; font-weight: 500; padding: .45rem .8rem; border-radius: .5rem; transition: background .15s; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; }
+        .btn-primary { background: #4f46e5; color: #fff; }
+        .btn-primary:hover { background: #6366f1; }
+        .btn-ghost { background: #111b21; color: #d1d5db; border: 1px solid #374151; }
+        .btn-ghost:hover { background: #1f2c34; }
+        @keyframes flash { 0%,100% { background: transparent; } 30% { background: rgba(99,102,241,.28); } }
+        .flash { animation: flash 1.3s ease-in-out; border-radius: .75rem; }
+        #userInput { max-height: 120px; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 antialiased">
+
+<div id="app" class="flex flex-col h-[100dvh] w-full max-w-[1600px] mx-auto shadow-2xl relative overflow-hidden">
+
+    <!-- HEADER -->
+    <header class="bg-wa-darkHeader text-gray-200 h-16 px-3 sm:px-4 flex items-center justify-between border-b border-gray-800 shrink-0 z-10">
+        <button id="btnGroupInfo" class="flex items-center gap-3 min-w-0 text-left" aria-label="Kelola karakter">
+            <div class="relative shrink-0">
+                <img id="groupAvatar" class="w-10 h-10 rounded-full object-cover border border-gray-700" alt="">
+                <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-wa-darkHeader rounded-full"></span>
+            </div>
+            <div class="min-w-0">
+                <h1 id="groupNameDisplay" class="font-semibold text-base text-gray-100 leading-tight truncate"></h1>
+                <p id="groupSubtext" class="text-xs text-gray-400 truncate"></p>
+            </div>
+        </button>
+        <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+            <button id="btnGdrive" title="Google Drive" class="p-2.5 rounded-full hover:bg-gray-700/50 transition" aria-label="Google Drive"><i id="gdIcon" class="fa-solid fa-cloud text-lg text-gray-500"></i></button>
+            <button id="btnSettings" title="Pengaturan & API Key" class="p-2.5 rounded-full hover:bg-gray-700/50 text-indigo-400 transition flex items-center gap-1.5 text-xs font-medium bg-indigo-950/40 border border-indigo-800/50">
+                <i class="fa-solid fa-key text-sm"></i>
+                <span id="apiKeyStatusText" class="hidden sm:inline"></span>
+            </button>
+            <button id="btnSidebar" title="Kelola karakter" class="p-2.5 rounded-full hover:bg-gray-700/50 text-gray-300 transition"><i class="fa-solid fa-users text-lg"></i></button>
+            <button id="btnExportChat" title="Ekspor chat (.txt)" class="p-2.5 rounded-full hover:bg-gray-700/50 text-gray-300 transition hidden sm:block"><i class="fa-solid fa-file-arrow-down text-lg"></i></button>
+            <button id="btnClearChat" title="Bersihkan chat" class="p-2.5 rounded-full hover:bg-gray-700/50 text-gray-300 transition"><i class="fa-solid fa-trash-can text-lg"></i></button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative min-h-0">
+
+        <div id="sidebarBackdrop" class="hidden absolute inset-0 bg-black/50 z-10"></div>
+
+        <!-- SIDEBAR -->
+        <aside id="sidebarPanel" class="absolute inset-y-0 left-0 z-20 w-full sm:w-80 md:w-96 bg-wa-darkBg border-r border-gray-800 flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out">
+            <div class="p-4 bg-wa-darkHeader border-b border-gray-800 flex justify-between items-center">
+                <h2 class="font-semibold text-base text-gray-100 flex items-center gap-2"><i class="fa-solid fa-robot text-indigo-400"></i> Kelola Karakter</h2>
+                <button id="btnCloseSidebar" class="text-gray-400 hover:text-white p-1" aria-label="Tutup"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                <div class="bg-indigo-950/30 border border-indigo-800/50 rounded-xl p-3 text-xs text-indigo-200/90 leading-relaxed">
+                    <i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i>
+                    Panggil karakter dengan <strong>@Nama</strong>. Tag <strong>@semua</strong> memanggil semua karakter. Balas (reply) pesan karakter untuk memanggilnya tanpa tag. Ajari karakter dengan <strong>/ajar @Nama aturan</strong>, atau cukup beri arahan lewat chat dan simpan saran aturannya.
+                </div>
+                <button id="btnAddChar" class="btn btn-primary w-full"><i class="fa-solid fa-plus"></i> Tambah Karakter</button>
+                <div>
+                    <h3 class="text-xs font-bold tracking-wider text-gray-400 uppercase mb-2">Daftar Karakter</h3>
+                    <div id="characterListContainer" class="space-y-2"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-800">
+                    <button id="btnExportChars" class="btn btn-ghost"><i class="fa-solid fa-file-export"></i> Ekspor</button>
+                    <button id="btnImportChars" class="btn btn-ghost"><i class="fa-solid fa-file-import"></i> Impor</button>
+                </div>
+                <input type="file" id="importFile" accept="application/json,.json" class="hidden">
+                <p class="hint">Ekspor karakter tidak menyertakan API Key.</p>
+            </div>
+        </aside>
+
+        <!-- CHAT -->
+        <main class="flex-1 flex flex-col chat-bg-pattern relative min-w-0 min-h-0">
+            <div id="messagesContainer" class="flex-1 overflow-y-auto p-3 sm:p-6 space-y-2 min-h-0" aria-live="polite"></div>
+            <button id="scrollBottomBtn" class="hidden absolute right-4 bottom-24 w-9 h-9 rounded-full bg-wa-darkHeader border border-gray-700 text-gray-300 shadow-lg hover:bg-gray-700 z-10" aria-label="Ke pesan terbaru"><i class="fa-solid fa-chevron-down"></i></button>
+
+            <div class="shrink-0 z-10 relative">
+                <div id="mentionPopup" class="hidden absolute bottom-full left-2 right-2 sm:left-4 sm:max-w-sm mb-1 bg-wa-darkHeader border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-30">
+                    <div class="px-3 py-1.5 text-[11px] font-bold text-gray-400 border-b border-gray-800 uppercase tracking-wider">Tag karakter</div>
+                    <div id="mentionList" class="max-h-48 overflow-y-auto divide-y divide-gray-800"></div>
+                </div>
+                <div id="emojiPanel" class="hidden absolute bottom-full left-2 sm:left-4 mb-1 bg-wa-darkHeader border border-gray-700 rounded-xl shadow-2xl p-2 grid grid-cols-8 gap-1 z-30 text-xl"></div>
+
+                <div id="replyBar" class="hidden bg-wa-darkHeader border-t border-gray-800 px-3 pt-2">
+                    <div class="flex items-start gap-2 bg-black/20 rounded-lg border-l-4 px-3 py-1.5" id="replyBarInner">
+                        <div class="min-w-0 flex-1">
+                            <div id="replyBarName" class="text-[11px] font-semibold"></div>
+                            <div id="replyBarText" class="text-[11px] text-gray-300/80 truncate"></div>
+                        </div>
+                        <button id="btnCancelReply" class="text-gray-400 hover:text-white" aria-label="Batalkan balasan"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+
+                <footer class="bg-wa-darkHeader p-2.5 sm:p-3 flex items-end gap-2 border-t border-gray-800">
+                    <button id="btnEmoji" class="p-2 text-gray-400 hover:text-gray-200 transition text-lg rounded-full" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>
+                    <textarea id="userInput" rows="1" placeholder="Ketik pesan... gunakan @Nama karakter" class="flex-1 resize-none bg-wa-darkBg text-gray-100 placeholder-gray-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none border border-transparent focus:border-indigo-600 transition"></textarea>
+                    <button id="btnSend" class="bg-indigo-600 hover:bg-indigo-500 text-white w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition shadow-md" aria-label="Kirim"><i class="fa-solid fa-paper-plane text-sm"></i></button>
+                </footer>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settingsModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-wa-darkHeader border border-gray-700 rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl">
+        <div class="flex justify-between items-center border-b border-gray-800 p-4">
+            <h3 class="text-base font-semibold text-gray-100 flex items-center gap-2"><i class="fa-solid fa-gear text-indigo-400"></i> Pengaturan</h3>
+            <button data-close="settingsModal" class="text-gray-400 hover:text-gray-200" aria-label="Tutup"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="overflow-y-auto p-4 space-y-5">
+            <section class="space-y-3">
+                <h4 class="text-xs font-bold tracking-wider text-gray-400 uppercase">Koneksi API</h4>
+                <div>
+                    <label class="lbl" for="setApiKey">xAI API Key</label>
+                    <div class="flex gap-2">
+                        <input type="password" id="setApiKey" placeholder="xai-..." autocomplete="off" class="field">
+                        <button id="btnToggleKey" type="button" class="btn btn-ghost" aria-label="Tampilkan key"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                    <p class="hint">Key disimpan di browser ini (localStorage). Jangan bagikan file ini bersama key-nya. Untuk dipublikasikan, pakai proxy backend lewat Base URL.</p>
+                </div>
+                <div>
+                    <label class="lbl" for="setModel">Model</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="setModel" list="modelList" placeholder="grok-4" class="field">
+                        <datalist id="modelList"></datalist>
+                        <button id="btnLoadModels" type="button" class="btn btn-ghost whitespace-nowrap"><i class="fa-solid fa-rotate"></i> Muat daftar</button>
+                    </div>
+                    <p class="hint">Tombol "Muat daftar" mengambil model yang benar-benar tersedia di akunmu dari endpoint /models.</p>
+                </div>
+                <div>
+                    <label class="lbl" for="setBaseUrl">Base URL</label>
+                    <input type="text" id="setBaseUrl" placeholder="https://api.x.ai/v1" class="field">
+                </div>
+            </section>
+
+            <section class="space-y-3">
+                <h4 class="text-xs font-bold tracking-wider text-gray-400 uppercase">Grup & Skenario</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="lbl" for="setGroupName">Nama grup</label>
+                        <input type="text" id="setGroupName" maxlength="60" class="field">
+                    </div>
+                    <div>
+                        <label class="lbl" for="setGroupAvatar">URL foto grup (opsional)</label>
+                        <input type="text" id="setGroupAvatar" placeholder="https://..." class="field">
+                    </div>
+                </div>
+                <div>
+                    <label class="lbl" for="setUserName">Namamu di grup</label>
+                    <input type="text" id="setUserName" maxlength="40" class="field">
+                </div>
+                <div>
+                    <label class="lbl" for="setUserPersona">Siapa kamu dalam cerita (opsional)</label>
+                    <textarea id="setUserPersona" rows="2" class="field resize-none" placeholder="Contoh: Pemilik kos baru yang baru pindah ke Banjarmasin."></textarea>
+                </div>
+                <div>
+                    <label class="lbl" for="setScenario">Skenario / latar adegan bersama (opsional)</label>
+                    <textarea id="setScenario" rows="3" class="field resize-none" placeholder="Contoh: Grup warga gang Mawar. Malam hari, listrik padam, semua sedang ronda."></textarea>
+                    <p class="hint">Dibaca semua karakter di setiap balasan.</p>
+                </div>
+            </section>
+
+            <section class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-bold tracking-wider text-gray-400 uppercase">Aturan untuk Semua Karakter</h4>
+                    <button id="btnTidyGlobal" type="button" class="text-[11px] text-indigo-400 hover:text-indigo-300"><i class="fa-solid fa-broom"></i> Rapikan dengan AI</button>
+                </div>
+                <textarea id="setGlobalRules" rows="4" class="field resize-y leading-relaxed" placeholder="Satu aturan per baris. Contoh: Panggil pengguna dengan namanya saja, tanpa 'Pak'."></textarea>
+                <p class="hint">Dibaca semua karakter di setiap balasan. Aturan khusus satu karakter diatur di panel karakter itu. Isi juga "Namamu di grup" di atas agar sapaan memakai namamu.</p>
+            </section>
+
+            <section class="space-y-3">
+                <h4 class="text-xs font-bold tracking-wider text-gray-400 uppercase">Parameter Percakapan</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="lbl" for="setContext">Konteks (pesan)</label>
+                        <input type="number" id="setContext" min="4" max="100" class="field">
+                    </div>
+                    <div>
+                        <label class="lbl" for="setMaxTokens">Maks token</label>
+                        <input type="number" id="setMaxTokens" min="64" max="8000" step="64" class="field">
+                    </div>
+                    <div>
+                        <label class="lbl" for="setTemp">Suhu: <span id="tempLabel">0.8</span></label>
+                        <input type="range" id="setTemp" min="0" max="2" step="0.1" class="w-full accent-indigo-500">
+                    </div>
+                </div>
+                <p class="hint">Model bernalar (reasoning) memakai token juga untuk berpikir. Jika balasan kosong atau terpotong, naikkan Maks token.</p>
+            </section>
+
+            <section class="space-y-2">
+                <h4 class="text-xs font-bold tracking-wider text-gray-400 uppercase">Google Drive</h4>
+                <label class="lbl" for="setGdClientId">Google OAuth Client ID</label>
+                <input id="setGdClientId" type="text" class="field" placeholder="1234567890-abc123.apps.googleusercontent.com" autocomplete="off" spellcheck="false">
+                <p id="gdStatusText" class="text-xs text-gray-300"></p>
+                <div class="flex flex-wrap gap-2">
+                    <button id="btnGdConnect" type="button" class="btn btn-primary"><i class="fa-brands fa-google-drive"></i> Hubungkan</button>
+                    <button id="btnGdSync" type="button" class="btn btn-ghost hidden"><i class="fa-solid fa-rotate"></i> Sinkron sekarang</button>
+                    <button id="btnGdDisconnect" type="button" class="btn btn-ghost hidden"><i class="fa-solid fa-link-slash"></i> Putuskan</button>
+                </div>
+                <p class="hint">Karakter, pengaturan, dan riwayat chat disimpan ke file wa-roleplay-data.json di Google Drive-mu, otomatis beberapa detik setelah ada perubahan. API Key dan Base URL tidak ikut disimpan. Pakai Client ID yang sama di semua perangkat. Halaman harus dibuka lewat http://localhost atau alamat https, bukan file langsung.</p>
+            </section>
+
+            <section class="space-y-2.5">
+                <h4 class="text-xs font-bold tracking-wider text-gray-400 uppercase">Perilaku</h4>
+                <label class="flex items-start gap-2 text-xs text-gray-200"><input type="checkbox" id="tgTyping" class="accent-indigo-500 w-4 h-4 mt-0.5"><span>Jeda mengetik realistis<br><span class="hint">Lama animasi mengikuti panjang balasan.</span></span></label>
+                <label class="flex items-start gap-2 text-xs text-gray-200"><input type="checkbox" id="tgSplit" class="accent-indigo-500 w-4 h-4 mt-0.5"><span>Izinkan karakter mengirim beberapa gelembung<br><span class="hint">Karakter boleh memecah jawaban jadi 2-4 pesan berurutan.</span></span></label>
+                <label class="flex items-start gap-2 text-xs text-gray-200"><input type="checkbox" id="tgAutoReply" class="accent-indigo-500 w-4 h-4 mt-0.5"><span>Pesan tanpa tag dijawab satu karakter acak<br><span class="hint">Jika mati, pesan tanpa tag tidak dijawab (kecuali membalas pesan karakter).</span></span></label>
+                <label class="flex items-start gap-2 text-xs text-gray-200"><input type="checkbox" id="tgChain" class="accent-indigo-500 w-4 h-4 mt-0.5"><span>Karakter boleh saling memanggil<br><span class="hint">Jika karakter men-tag karakter lain, yang di-tag ikut membalas (maks 4 balasan lanjutan).</span></span></label>
+                <label class="flex items-start gap-2 text-xs text-gray-200"><input type="checkbox" id="tgLearn" class="accent-indigo-500 w-4 h-4 mt-0.5"><span>Deteksi arahan otomatis<br><span class="hint">Saat pesanmu terdengar seperti arahan ("jangan begitu", "mulai sekarang..."), aplikasi menawarkan menyimpannya sebagai aturan. Memakai 1 panggilan AI tambahan.</span></span></label>
+            </section>
+        </div>
+        <div class="flex justify-end gap-2 p-4 border-t border-gray-800">
+            <button data-close="settingsModal" class="btn btn-ghost">Batal</button>
+            <button id="btnSaveSettings" class="btn btn-primary">Simpan Pengaturan</button>
+        </div>
+    </div>
+</div>
+
+<!-- CHARACTER MODAL -->
+<div id="charModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-wa-darkHeader border border-gray-700 rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl">
+        <div class="flex justify-between items-center border-b border-gray-800 p-4">
+            <h3 id="charModalTitle" class="text-base font-semibold text-gray-100 flex items-center gap-2"><i class="fa-solid fa-user-pen text-indigo-400"></i> Karakter</h3>
+            <button data-close="charModal" class="text-gray-400 hover:text-gray-200" aria-label="Tutup"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="overflow-y-auto p-4 space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="lbl" for="charName">Nama tampilan</label>
+                    <input type="text" id="charName" maxlength="40" placeholder="Contoh: Razak" class="field">
+                </div>
+                <div>
+                    <label class="lbl" for="charTag">Tag (@) tanpa spasi</label>
+                    <input type="text" id="charTag" maxlength="24" placeholder="Razak" class="field">
+                </div>
+            </div>
+            <div class="flex items-end gap-3">
+                <img id="charAvatarPreview" class="w-14 h-14 rounded-full object-cover border border-gray-700 shrink-0" alt="">
+                <div class="flex-1 min-w-0">
+                    <label class="lbl" for="charAvatarUrl">URL foto profil</label>
+                    <input type="text" id="charAvatarUrl" placeholder="https://... (kosong = inisial otomatis)" class="field">
+                </div>
+                <div class="w-16 shrink-0">
+                    <label class="lbl" for="charColor">Warna</label>
+                    <input type="color" id="charColor" value="#a855f7" class="w-full h-8 bg-transparent rounded cursor-pointer border border-gray-700">
+                </div>
+            </div>
+            <div>
+                <div class="text-xs text-gray-400 mb-1">Preset avatar</div>
+                <div id="avatarPresets" class="flex flex-wrap gap-2"></div>
+                <div class="flex gap-2 mt-2">
+                    <button id="btnUploadAvatar" type="button" class="btn btn-ghost"><i class="fa-solid fa-upload"></i> Unggah foto</button>
+                    <button id="btnClearAvatar" type="button" class="btn btn-ghost"><i class="fa-solid fa-eraser"></i> Pakai inisial</button>
+                </div>
+                <input type="file" id="avatarFile" accept="image/*" class="hidden">
+            </div>
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="lbl !mb-0" for="charPrompt">System Prompt / Persona</label>
+                    <button id="btnPromptTemplate" type="button" class="text-[11px] text-indigo-400 hover:text-indigo-300"><i class="fa-solid fa-wand-magic-sparkles"></i> Sisipkan template</button>
+                </div>
+                <textarea id="charPrompt" rows="10" class="field resize-y leading-relaxed" placeholder="Karakter, latar belakang, gaya bicara, glosarium bahasa daerah, contoh percakapan..."></textarea>
+                <p class="hint">Bahasa dan dialek ditentukan oleh persona ini. Aplikasi tidak memaksakan bahasa apa pun.</p>
+            </div>
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="lbl !mb-0" for="charRules">Aturan Tambahan (hasil "ajaran" darimu)</label>
+                    <button id="btnTidyRules" type="button" class="text-[11px] text-indigo-400 hover:text-indigo-300"><i class="fa-solid fa-broom"></i> Rapikan dengan AI</button>
+                </div>
+                <textarea id="charRules" rows="5" class="field resize-y leading-relaxed" placeholder="Satu aturan per baris. Contoh: Jawab dengan bahasa sopan. Panggil pengguna dengan namanya saja, tanpa 'Pak'."></textarea>
+                <p class="hint">Prioritasnya di atas persona, dan aturan paling bawah dianggap paling baru. Bisa juga ditambah lewat chat: /ajar @Nama aturan.</p>
+            </div>
+            <p id="charError" class="hidden text-xs text-red-400"></p>
+        </div>
+        <div class="flex justify-end gap-2 p-4 border-t border-gray-800">
+            <button data-close="charModal" class="btn btn-ghost">Batal</button>
+            <button id="btnSaveChar" class="btn btn-primary">Simpan Karakter</button>
+        </div>
+    </div>
+</div>
+
+<div id="toastBox" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center gap-2 pointer-events-none"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ============================================================
+   KONSTANTA & DEFAULT
+   ============================================================ */
+const LS = { chat: 'wa_rp_chat_v2', chars: 'wa_rp_characters_v2', settings: 'wa_rp_settings_v2' };
+const MAX_STORED = 500;
+const CHAIN_LIMIT = 4;
+const MAX_RULES = 40;
+const INSTRUCTION_RE = /\b(?:jangan|harus|mulai (?:sekarang|dari|ini)|dari sekarang|ke depan|selanjutnya|seterusnya|sebaiknya|seharusnya|tolong (?:jangan|pakai|panggil|gunakan|jawab)|panggil(?:lah)? (?:aku|saya|gue|ane)|panggil(?:lah)? [^.!?\n]{0,30}\bsaja\b|jawab(?:lah)? (?:dengan|pakai|dalam)|pakai(?:lah)? bahasa|gunakan bahasa|bicara(?:lah)? (?:dengan|pakai)|biasakan|ingat(?:lah)? (?:untuk|bahwa)|kurangi|berhenti|hentikan)\b/i;
+
+const DEFAULT_SETTINGS = {
+    apiKey: '',
+    model: 'grok-4',
+    baseUrl: 'https://api.x.ai/v1',
+    temperature: 0.8,
+    maxTokens: 1024,
+    contextMessages: 30,
+    groupName: 'Grup Roleplay',
+    groupAvatar: '',
+    scenario: '',
+    userName: 'Aku',
+    userPersona: '',
+    typingDelay: true,
+    splitBubbles: true,
+    autoReplyNoTag: false,
+    chainReplies: false,
+    learnSuggest: true,
+    globalRules: []
+};
+
+const DEFAULT_CHARACTERS = [
+    {
+        id: 'char_1', name: 'Grok', tag: 'Grok', color: '#38bdf8',
+        avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=60',
+        prompt: 'Kamu adalah Grok, kecerdasan buatan cerdas yang diciptakan oleh xAI. Sifatmu cerdas, sarkastik ringan, membantu, humoris, dan memiliki akses pengetahuan luas.'
+    },
+    {
+        id: 'char_2', name: 'Sherlock', tag: 'Sherlock', color: '#a855f7',
+        avatar: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=100&auto=format&fit=crop&q=60',
+        prompt: 'Kamu adalah Sherlock Holmes, seorang detektif konsultan era modern yang sangat analitis, teliti, dan berpikir cepat.'
+    },
+    {
+        id: 'char_3', name: 'Razak', tag: 'Razak', color: '#4ade80',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=60',
+        prompt: 'Kamu adalah Razak, rekan satu tim di grup investigasi yang santai, humoris, dan ramah.'
+    }
+];
+
+const PROMPT_TEMPLATE = `# Identitas
+Nama:
+Umur / peran:
+Hubungan dengan anggota grup lain:
+
+# Gaya bicara
+- Bahasa / dialek: (contoh: Bahasa Banjar santai)
+- Panjang balasan: (contoh: 1-3 kalimat, sesekali lebih panjang kalau bercerita)
+- Kebiasaan: (contoh: sering memakai emoji, suka menyela, logat khas)
+
+# Glosarium (kata = arti, contoh pemakaian) - ganti dengan glosarium milikmu
+- kada = tidak -> "Kada papa lah."
+- ulun = saya (sopan)
+- pian = Anda / kamu (sopan)
+- banar = sangat / benar
+
+# Contoh percakapan
+Pengguna: (contoh pesan)
+Karakter: (contoh balasan yang ideal)
+
+# Larangan
+- Jangan keluar dari karakter.
+- Jangan menjelaskan arti kata daerah kecuali ditanya.`;
+
+const EMOJIS = ['😀','😂','🤣','😊','😍','😘','😎','🤔','😅','😭','😡','😱','👍','👎','🙏','👏','💪','🔥','✨','🎉','❤️','💔','😴','🤝','👀','🙄','😉','🥲','😬','🤗','😇','🥳'];
+const AVATAR_STYLES = ['avataaars', 'bottts', 'adventurer', 'lorelei', 'thumbs', 'fun-emoji'];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+    settings: { ...DEFAULT_SETTINGS },
+    characters: [],
+    chat: [],
+    busy: false,
+    abort: null,
+    typing: null,
+    replyTo: null,
+    mention: { items: [], index: 0, open: false },
+    editingCharId: null,
+    draftAvatar: '',
+    tagTouched: false
+};
+
+const $ = id => document.getElementById(id);
+
+/* ============================================================
+   UTIL
+   ============================================================ */
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+const clone = o => JSON.parse(JSON.stringify(o));
+const abortErr = () => new DOMException('Dibatalkan', 'AbortError');
+
+function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function escapeRegExp(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function sanitizeTag(s) { return String(s || '').replace(/[^A-Za-z0-9_]/g, '').slice(0, 24); }
+function validColor(c) { return /^#[0-9a-f]{6}$/i.test(c || '') ? c : '#a855f7'; }
+function safeUrl(u) {
+    u = String(u || '').trim();
+    return /^(https?:\/\/|data:image\/)/i.test(u) ? u : '';
+}
+function loadJSON(key, fallback) {
+    try {
+        const raw = localStorage.getItem(key);
+        return raw === null ? fallback : JSON.parse(raw);
+    } catch (e) { return fallback; }
+}
+function sleep(ms, signal) {
+    return new Promise((resolve, reject) => {
+        if (signal && signal.aborted) return reject(abortErr());
+        const ab = () => { clearTimeout(t); reject(abortErr()); };
+        const t = setTimeout(() => { if (signal) signal.removeEventListener('abort', ab); resolve(); }, ms);
+        if (signal) signal.addEventListener('abort', ab, { once: true });
+    });
+}
+function fmtTime(ts) {
+    return new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+function dayKey(ts) { return new Date(ts).toDateString(); }
+function dayLabel(ts) {
+    const k = dayKey(ts);
+    if (k === new Date().toDateString()) return 'Hari ini';
+    if (k === new Date(Date.now() - 86400000).toDateString()) return 'Kemarin';
+    return new Date(ts).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+function snippet(t, n = 90) {
+    t = String(t || '').replace(/\s+/g, ' ').trim();
+    return t.length > n ? t.slice(0, n - 1) + '…' : t;
+}
+function downloadFile(name, text, mime) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function toast(msg, kind = 'info', ms = 2800) {
+    const el = document.createElement('div');
+    const cls = kind === 'error' ? 'bg-red-950/95 border-red-800 text-red-100'
+        : kind === 'ok' ? 'bg-emerald-950/95 border-emerald-800 text-emerald-100'
+        : 'bg-wa-darkHeader border-gray-700 text-gray-100';
+    el.className = 'px-3 py-2 rounded-lg text-xs shadow-lg border max-w-[90vw] ' + cls;
+    el.textContent = msg;
+    $('toastBox').appendChild(el);
+    setTimeout(() => el.remove(), ms);
+}
+
+/* Avatar */
+function initialsAvatar(name, color) {
+    const ini = String(name || '?').trim().slice(0, 2).toUpperCase();
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="${validColor(color)}"/><text x="48" y="48" dy=".35em" text-anchor="middle" font-family="Arial,sans-serif" font-size="40" font-weight="700" fill="#fff">${escapeHtml(ini)}</text></svg>`;
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+function imgTag(src, name, color, cls) {
+    const s = safeUrl(src) || initialsAvatar(name, color);
+    return `<img src="${escapeHtml(s)}" data-fb="${escapeHtml(name)}|${escapeHtml(color)}" class="${cls}" alt="" loading="lazy">`;
+}
+document.addEventListener('error', e => {
+    const t = e.target;
+    if (t && t.tagName === 'IMG' && t.dataset.fb) {
+        const v = t.dataset.fb, i = v.lastIndexOf('|');
+        delete t.dataset.fb;
+        t.src = initialsAvatar(v.slice(0, i), v.slice(i + 1));
+    }
+}, true);
+
+/* ============================================================
+   PENYIMPANAN
+   ============================================================ */
+let quotaWarned = false;
+function safeSet(key, value) {
+    try { localStorage.setItem(key, value); return true; }
+    catch (e) {
+        if (!quotaWarned) { quotaWarned = true; toast('Penyimpanan browser penuh. Beberapa data mungkin tidak tersimpan.', 'error', 4500); }
+        return false;
+    }
+}
+function sanitizeChar(c) {
+    if (!c || typeof c !== 'object') return null;
+    const tag = sanitizeTag(c.tag || c.name);
+    if (!tag) return null;
+    return {
+        id: String(c.id || uid()),
+        name: String(c.name || tag).trim().slice(0, 40) || tag,
+        tag,
+        color: validColor(c.color),
+        avatar: safeUrl(c.avatar),
+        prompt: String(c.prompt || '').slice(0, 20000),
+        rules: parseRuleLines(c.rules)
+    };
+}
+function parseRuleLines(input) {
+    const lines = Array.isArray(input) ? input : String(input || '').split('\n');
+    const out = [], seen = new Set();
+    for (let l of lines) {
+        l = String(l || '').replace(/^\s*(?:[-•*]|\d+[.)])\s*/, '').trim().slice(0, 300);
+        if (l.length < 3) continue;
+        const k = l.toLowerCase();
+        if (seen.has(k)) continue;
+        seen.add(k); out.push(l);
+        if (out.length >= MAX_RULES) break;
+    }
+    return out;
+}
+function loadSettings() {
+    const saved = loadJSON(LS.settings, null);
+    const s = { ...DEFAULT_SETTINGS, ...(saved && typeof saved === 'object' ? saved : {}) };
+    if (!saved) { // migrasi dari versi lama
+        const k = localStorage.getItem('grok_api_key'); if (k) s.apiKey = k;
+        const m = localStorage.getItem('grok_model'); if (m) s.model = m;
+    }
+    s.globalRules = parseRuleLines(s.globalRules);
+    return s;
+}
+function loadCharacters() {
+    let list = loadJSON(LS.chars, null);
+    if (!Array.isArray(list)) list = loadJSON('grok_roleplay_characters', null);
+    if (!Array.isArray(list)) list = clone(DEFAULT_CHARACTERS);
+    return list.map(sanitizeChar).filter(Boolean);
+}
+function loadChat() {
+    const list = loadJSON(LS.chat, []);
+    if (!Array.isArray(list)) return [];
+    return list.filter(m => m && typeof m === 'object' && typeof m.text === 'string' && ['user', 'bot', 'system', 'error', 'ruleSuggest'].includes(m.type))
+        .map(m => ({ ...m, id: m.id || uid(), ts: Number(m.ts) || Date.now() }));
+}
+function saveSettings() { safeSet(LS.settings, JSON.stringify(state.settings)); scheduleGdSync(); }
+function saveCharacters() { safeSet(LS.chars, JSON.stringify(state.characters)); scheduleGdSync(); }
+let persistTimer = null;
+function persist() { clearTimeout(persistTimer); persistTimer = setTimeout(flushChat, 150); }
+function flushChat() {
+    clearTimeout(persistTimer);
+    if (state.chat.length > MAX_STORED) state.chat = state.chat.slice(-MAX_STORED);
+    if (!safeSet(LS.chat, JSON.stringify(state.chat))) {
+        state.chat = state.chat.slice(-Math.floor(MAX_STORED / 2));
+        safeSet(LS.chat, JSON.stringify(state.chat));
+    }
+    scheduleGdSync();
+}
+
+/* ============================================================
+   GOOGLE DRIVE (sinkron karakter, pengaturan, dan riwayat chat)
+   ============================================================ */
+const GD_KEY = 'wa_rp_gdrive_v1';
+const GD_FILE = 'wa-roleplay-data.json';
+const GD_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+const GD_API = 'https://www.googleapis.com/drive/v3/files';
+const GD_UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files';
+const gd = Object.assign({ clientId: '', enabled: false, fileId: '', lastHash: '', lastSync: 0 }, loadJSON(GD_KEY, {}) || {});
+let gdToken = '', gdTokenExp = 0, gdClient = null, gdWaiter = null;
+let gdTimer = null, gdBusy = false, gdQueued = false, gdApplying = false;
+let gdStatus = 'login', gdError = '';
+
+function gdSave() { safeSet(GD_KEY, JSON.stringify(gd)); }
+function scheduleGdSync() {
+    if (!gd.enabled || gdApplying) return;
+    clearTimeout(gdTimer);
+    gdTimer = setTimeout(() => gdSync({}), 4000);
+}
+function gdPayload() {
+    const { apiKey, baseUrl, ...safeSettings } = state.settings; // API key & Base URL tidak ikut ke Drive
+    return { app: 'wa-roleplay', v: 1, savedAt: new Date().toISOString(), settings: safeSettings, characters: state.characters, chat: state.chat };
+}
+function gdHash(o) {
+    const str = JSON.stringify(o, function (k, v) {
+        if (k === 'savedAt' && this === o) return undefined;
+        if (k === 'status' && this && this.type === 'user') return undefined;
+        return v;
+    });
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+    return str.length + ':' + (h >>> 0).toString(36);
+}
+function gdAuthError(msg) { const e = new Error(msg); e.code = 'auth'; return e; }
+
+function gdInitClient() {
+    if (gdClient) return true;
+    const oauth = window.google && window.google.accounts && window.google.accounts.oauth2;
+    if (!gd.clientId || !oauth) return false;
+    gdClient = oauth.initTokenClient({
+        client_id: gd.clientId,
+        scope: GD_SCOPE,
+        callback: resp => {
+            const w = gdWaiter; gdWaiter = null;
+            if (!w) return;
+            if (!resp || resp.error || !resp.access_token) return w.reject(gdAuthError((resp && (resp.error_description || resp.error)) || 'Login Google gagal.'));
+            gdToken = resp.access_token;
+            gdTokenExp = Date.now() + (Number(resp.expires_in) || 3600) * 1000;
+            w.resolve(gdToken);
+        },
+        error_callback: err => {
+            const w = gdWaiter; gdWaiter = null;
+            if (!w) return;
+            const t = err && err.type;
+            w.reject(gdAuthError(t === 'popup_closed' ? 'Jendela login Google ditutup.'
+                : t === 'popup_failed_to_open' ? 'Browser memblokir jendela login Google. Izinkan pop-up lalu coba lagi.'
+                : 'Login Google gagal.'));
+        }
+    });
+    return true;
+}
+function gdGetToken() {
+    return new Promise((resolve, reject) => {
+        if (gdToken && Date.now() < gdTokenExp - 60000) return resolve(gdToken);
+        if (!gd.clientId) return reject(gdAuthError('Client ID belum diisi.'));
+        if (!gdInitClient()) return reject(gdAuthError('Library Google belum termuat (cek koneksi internet).'));
+        gdWaiter = { resolve, reject };
+        try { gdClient.requestAccessToken({ prompt: '' }); }
+        catch (e) { gdWaiter = null; reject(gdAuthError(e.message || 'Login Google gagal.')); }
+    });
+}
+async function gdFetch(url, opts = {}) {
+    const r = await fetch(url, { ...opts, headers: { ...(opts.headers || {}), Authorization: 'Bearer ' + gdToken } });
+    if (r.status === 401) { gdToken = ''; throw gdAuthError('Sesi Google habis. Masuk ulang.'); }
+    if (!r.ok) {
+        let m = ''; try { m = (await r.json()).error.message; } catch (e) { }
+        const err = new Error('Drive ' + r.status + (m ? ': ' + m : '')); err.status = r.status; throw err;
+    }
+    return r;
+}
+async function gdFindFile() {
+    if (gd.fileId) {
+        try {
+            const j = await (await gdFetch(`${GD_API}/${gd.fileId}?fields=id,trashed`)).json();
+            if (j && !j.trashed) return gd.fileId;
+        } catch (e) { if (e.code === 'auth') throw e; }
+        gd.fileId = '';
+    }
+    const q = encodeURIComponent(`name='${GD_FILE}' and trashed=false`);
+    const j = await (await gdFetch(`${GD_API}?q=${q}&spaces=drive&fields=files(id)&orderBy=modifiedTime%20desc&pageSize=1`)).json();
+    return (j.files && j.files[0] && j.files[0].id) || '';
+}
+async function gdCreate(body) {
+    const b = 'wa' + uid();
+    const multipart = `--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: GD_FILE, mimeType: 'application/json' })}\r\n--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${body}\r\n--${b}--`;
+    const r = await gdFetch(`${GD_UPLOAD}?uploadType=multipart&fields=id`, { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${b}` }, body: multipart });
+    return (await r.json()).id;
+}
+async function gdUpdate(id, body) {
+    await gdFetch(`${GD_UPLOAD}/${id}?uploadType=media`, { method: 'PATCH', headers: { 'Content-Type': 'application/json; charset=UTF-8' }, body });
+}
+function gdDownloadBackup(obj, label) {
+    try {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(obj)], { type: 'application/json' }));
+        a.download = `cadangan-${label}-${Date.now()}.json`;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    } catch (e) { }
+}
+function gdAskConflict(remote) {
+    const when = remote.savedAt ? new Date(remote.savedAt).toLocaleString('id-ID') : 'tidak diketahui';
+    return confirm('Data di Google Drive berbeda dengan data di perangkat ini.\n\nDrive terakhir disimpan: ' + when +
+        '\n\nOK = pakai data dari Drive (data di perangkat ini ditimpa)\nBatal = pakai data di perangkat ini (isi Drive ditimpa)\n\nSalinan dari pihak yang ditimpa akan diunduh sebagai cadangan.');
+}
+function gdApply(data) {
+    gdApplying = true;
+    try {
+        if (Array.isArray(data.characters)) {
+            const l = data.characters.map(sanitizeChar).filter(Boolean);
+            if (l.length) state.characters = l;
+        }
+        if (data.settings && typeof data.settings === 'object') {
+            const keep = { apiKey: state.settings.apiKey, baseUrl: state.settings.baseUrl };
+            const s = { ...DEFAULT_SETTINGS, ...data.settings, ...keep };
+            s.globalRules = parseRuleLines(s.globalRules);
+            state.settings = s;
+        }
+        if (Array.isArray(data.chat)) {
+            state.chat = data.chat
+                .filter(m => m && typeof m === 'object' && typeof m.text === 'string' && ['user', 'bot', 'system', 'error', 'ruleSuggest'].includes(m.type))
+                .map(m => ({ ...m, id: m.id || uid(), ts: Number(m.ts) || Date.now() }));
+        }
+        saveCharacters(); saveSettings(); flushChat();
+        cancelReply();
+        renderCharacterList(); updateHeader(); updateSendButton(); renderMessages(true);
+    } finally { gdApplying = false; }
+}
+
+async function gdSync(opts = {}) {
+    if (!gd.enabled) return;
+    if (gdBusy) { gdQueued = true; return; }
+    const hasToken = gdToken && Date.now() < gdTokenExp - 60000;
+    if (!hasToken && !opts.interactive) { gdSetStatus('login'); return; }
+    gdBusy = true; gdSetStatus('sync');
+    try {
+        await gdGetToken();
+        let id = await gdFindFile();
+        const local = gdPayload(), localHash = gdHash(local);
+        if (!id) {
+            gd.fileId = await gdCreate(JSON.stringify(local));
+            gd.lastHash = localHash;
+        } else {
+            gd.fileId = id;
+            const remote = await (await gdFetch(`${GD_API}/${id}?alt=media`)).json();
+            if (!remote || remote.app !== 'wa-roleplay') throw new Error('File di Drive bukan data aplikasi ini.');
+            const remoteHash = gdHash(remote);
+            const localChanged = localHash !== gd.lastHash, remoteChanged = remoteHash !== gd.lastHash;
+            let action;
+            if (localHash === remoteHash) action = 'same';
+            else if (!remoteChanged) action = 'push';
+            else if (!localChanged) action = 'pull';
+            else {
+                const useDrive = gdAskConflict(remote);
+                gdDownloadBackup(useDrive ? local : remote, useDrive ? 'perangkat' : 'drive');
+                action = useDrive ? 'pull' : 'push';
+            }
+            if (action === 'pull') {
+                if (state.busy) { gdSetStatus('ok'); setTimeout(() => gdSync({}), 8000); return; }
+                gdApply(remote);
+                gd.lastHash = remoteHash;
+                scheduleGdSync(); // rapikan format di Drive setelah data dimuat
+            } else if (action === 'push') {
+                await gdUpdate(id, JSON.stringify(local));
+                gd.lastHash = localHash;
+            } else gd.lastHash = localHash;
+        }
+        gd.lastSync = Date.now(); gdSave(); gdSetStatus('ok');
+        if (opts.interactive) toast('Tersinkron dengan Google Drive.', 'ok');
+    } catch (e) {
+        gdSave();
+        gdSetStatus(e && e.code === 'auth' ? 'login' : 'error', (e && e.message) || 'Gagal menyinkronkan.');
+        if (opts.interactive) toast((e && e.message) || 'Gagal menyinkronkan.', 'error', 5000);
+    } finally {
+        gdBusy = false;
+        if (gdQueued) { gdQueued = false; scheduleGdSync(); }
+    }
+}
+
+function gdSetStatus(s, msg) { gdStatus = s; gdError = msg || ''; gdRenderUi(); }
+function gdRenderUi() {
+    const st = gd.enabled ? gdStatus : 'off';
+    const when = gd.lastSync ? new Date(gd.lastSync).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+    const map = {
+        off: ['fa-cloud', 'text-gray-500', 'Google Drive: belum terhubung', 'Belum terhubung.'],
+        ok: ['fa-cloud', 'text-emerald-400', 'Google Drive: tersinkron' + (when ? ' ' + when : ''), 'Terhubung. Terakhir tersinkron ' + (when || 'baru saja') + '.'],
+        sync: ['fa-rotate fa-spin', 'text-sky-400', 'Google Drive: menyinkronkan…', 'Menyinkronkan…'],
+        login: ['fa-cloud', 'text-amber-400', 'Google Drive: ketuk untuk masuk & sinkron', 'Terhubung, tetapi perlu masuk ke Google lagi. Tekan "Sinkron sekarang".'],
+        error: ['fa-triangle-exclamation', 'text-red-400', 'Google Drive: gagal. Ketuk untuk coba lagi', 'Gagal: ' + gdError]
+    };
+    const m = map[st];
+    const ic = $('gdIcon'); if (ic) ic.className = 'fa-solid ' + m[0] + ' text-lg ' + m[1];
+    const b = $('btnGdrive'); if (b) b.title = m[2];
+    const t = $('gdStatusText'); if (t) t.textContent = m[3];
+    const on = gd.enabled;
+    if ($('btnGdConnect')) $('btnGdConnect').classList.toggle('hidden', on);
+    if ($('btnGdSync')) $('btnGdSync').classList.toggle('hidden', !on);
+    if ($('btnGdDisconnect')) $('btnGdDisconnect').classList.toggle('hidden', !on);
+}
+function gdFillSettings() { $('setGdClientId').value = gd.clientId || ''; gdRenderUi(); }
+async function gdConnect() {
+    const id = $('setGdClientId').value.trim();
+    if (!/\.apps\.googleusercontent\.com$/i.test(id)) { toast('Client ID tidak valid. Harus berakhiran .apps.googleusercontent.com', 'error', 4500); return; }
+    if (id !== gd.clientId) { gd.clientId = id; gdClient = null; gdToken = ''; gdTokenExp = 0; gd.fileId = ''; gd.lastHash = ''; }
+    gd.enabled = true; gdSave(); gdSetStatus('login');
+    await gdSync({ interactive: true });
+}
+function gdDisconnect() {
+    if (!confirm('Putuskan Google Drive? File di Drive tidak dihapus.')) return;
+    try { if (gdToken && window.google && window.google.accounts && window.google.accounts.oauth2) window.google.accounts.oauth2.revoke(gdToken, () => { }); } catch (e) { }
+    gdToken = ''; gdTokenExp = 0; gd.enabled = false; gd.fileId = ''; gd.lastHash = ''; gdSave(); gdRenderUi();
+    toast('Google Drive diputus.', 'info');
+}
+function gdBind() {
+    $('btnGdConnect').addEventListener('click', gdConnect);
+    $('btnGdSync').addEventListener('click', () => gdSync({ interactive: true }));
+    $('btnGdDisconnect').addEventListener('click', gdDisconnect);
+    $('btnGdrive').addEventListener('click', () => {
+        if (!gd.enabled) { openSettings(); setTimeout(() => $('setGdClientId').focus(), 80); }
+        else gdSync({ interactive: true });
+    });
+    // Sesi Google habis tiap jam & browser hanya mengizinkan login lewat sentuhan pengguna:
+    // sentuhan pertama setelah halaman dibuka dipakai untuk masuk & menarik data terbaru.
+    document.addEventListener('pointerdown', e => {
+        if (e.target && e.target.closest && e.target.closest('#btnGdrive,#settingsModal')) return;
+        if (gd.enabled && gdStatus === 'login' && !gdBusy) gdSync({ interactive: true });
+    }, { once: true, capture: true });
+    gdRenderUi();
+}
+
+/* ============================================================
+   KARAKTER & MENTION
+   ============================================================ */
+const findCharById = id => state.characters.find(c => c.id === id);
+const findCharByTag = tag => state.characters.find(c => c.tag.toLowerCase() === String(tag).toLowerCase());
+
+function parseMentions(text, allowAll = true) {
+    const out = [], seen = new Set();
+    const re = /(^|[^\w])@(\w+)/g;
+    let m;
+    while ((m = re.exec(text))) {
+        const tag = m[2].toLowerCase();
+        if (allowAll && ['semua', 'all', 'everyone'].includes(tag)) {
+            state.characters.forEach(c => { if (!seen.has(c.id)) { seen.add(c.id); out.push(c); } });
+            continue;
+        }
+        const c = findCharByTag(tag);
+        if (c && !seen.has(c.id)) { seen.add(c.id); out.push(c); }
+    }
+    return out;
+}
+
+/* ============================================================
+   FORMAT TEKS (aman XSS: escape dulu, baru format)
+   ============================================================ */
+function formatText(raw) {
+    let t = escapeHtml(raw);
+    t = t.replace(/`([^`\n]+)`/g, '<code class="bg-black/30 px-1 rounded">$1</code>');
+    t = t.replace(/(^|[\s(])\*([^\s*](?:[^*\n]*[^\s*])?)\*(?=$|[\s).,!?:;])/g, '$1<strong>$2</strong>');
+    t = t.replace(/(^|[\s(])_([^\s_](?:[^_\n]*[^\s_])?)_(?=$|[\s).,!?:;])/g, '$1<em>$2</em>');
+    t = t.replace(/(^|[\s(])~([^\s~](?:[^~\n]*[^\s~])?)~(?=$|[\s).,!?:;])/g, '$1<del>$2</del>');
+    t = t.replace(/(^|[^\w])@(\w+)/g, (m, pre, tag) => {
+        const c = findCharByTag(tag);
+        const color = c ? c.color : '#818cf8';
+        return `${pre}<span class="font-semibold" style="color:${color}">@${tag}</span>`;
+    });
+    return t;
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function actionsHtml(m, i, lastIdx, isBot) {
+    const b = (a, icon, title) => `<button data-action="${a}" data-id="${m.id}" title="${title}" class="w-6 h-6 rounded-full text-gray-400 hover:text-white hover:bg-gray-700/60 text-[11px]"><i class="fa-solid ${icon}"></i></button>`;
+    let h = b('reply', 'fa-reply', 'Balas');
+    if (isBot && i === lastIdx) h += b('regen', 'fa-rotate-right', 'Buat ulang balasan');
+    h += b('delete', 'fa-trash-can', 'Hapus pesan');
+    return `<div class="flex shrink-0 self-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition">${h}</div>`;
+}
+function quoteHtml(rt) {
+    if (!rt) return '';
+    const color = validColor(rt.color || '#818cf8');
+    return `<div data-action="jump" data-id="${escapeHtml(rt.id)}" class="cursor-pointer mb-1 border-l-4 rounded bg-black/20 px-2 py-1" style="border-color:${color}">
+        <div class="text-[11px] font-semibold" style="color:${color}">${escapeHtml(rt.name)}</div>
+        <div class="text-[11px] text-gray-300/80 line-clamp-2">${escapeHtml(rt.text)}</div></div>`;
+}
+function messageHtml(m, i, lastIdx) {
+    const time = fmtTime(m.ts);
+    if (m.type === 'system') {
+        return `<div class="flex justify-center" id="msg-${m.id}"><div class="bg-wa-darkHeader/90 border border-gray-800 text-gray-300 text-[11px] px-3 py-1 rounded-lg max-w-md text-center shadow whitespace-pre-line">${formatText(m.text)}</div></div>`;
+    }
+    if (m.type === 'error') {
+        return `<div class="flex justify-center" id="msg-${m.id}"><div class="bg-red-950/60 border border-red-900 text-red-200 text-[11px] px-3 py-1.5 rounded-lg max-w-md text-center shadow space-y-1">
+            <div><i class="fa-solid fa-triangle-exclamation mr-1"></i>${m.senderName ? escapeHtml(m.senderName) + ': ' : ''}${escapeHtml(m.text)}</div>
+            ${m.retryCharId ? `<button data-action="retry" data-id="${m.id}" class="underline hover:text-white">Coba lagi</button>` : ''}</div></div>`;
+    }
+    if (m.type === 'ruleSuggest') {
+        const ids = (m.charIds || []).map(findCharById).filter(Boolean);
+        const names = ids.map(c => c.name).join(', ');
+        if (m.status === 'saved') {
+            return `<div class="flex justify-center" id="msg-${m.id}"><div class="bg-emerald-950/50 border border-emerald-900 text-emerald-100 text-[11px] px-3 py-1.5 rounded-lg max-w-md shadow">
+                <div class="font-semibold"><i class="fa-solid fa-graduation-cap mr-1"></i>Aturan disimpan untuk ${escapeHtml(m.savedTo || '')}</div>
+                <div class="whitespace-pre-wrap text-emerald-100/80 mt-0.5">${escapeHtml(m.text)}</div></div></div>`;
+        }
+        return `<div class="flex justify-center" id="msg-${m.id}"><div class="bg-indigo-950/60 border border-indigo-800 text-indigo-100 text-[11px] px-3 py-2 rounded-lg w-full max-w-md shadow space-y-2">
+            <div class="font-semibold"><i class="fa-solid fa-graduation-cap mr-1"></i>Jadikan aturan tetap? <span class="font-normal text-indigo-200/70">(satu aturan per baris, boleh diedit)</span></div>
+            <textarea data-rule-edit="${m.id}" rows="2" class="field resize-y">${escapeHtml(m.text)}</textarea>
+            <div class="flex flex-wrap gap-1.5">
+                ${ids.length ? `<button data-action="rule-save-chars" data-id="${m.id}" class="btn btn-primary">Simpan untuk ${escapeHtml(names)}</button>` : ''}
+                <button data-action="rule-save-global" data-id="${m.id}" class="btn ${ids.length ? 'btn-ghost' : 'btn-primary'}">Untuk semua karakter</button>
+                <button data-action="rule-dismiss" data-id="${m.id}" class="btn btn-ghost">Abaikan</button>
+            </div></div></div>`;
+    }
+    if (m.type === 'user') {
+        const ticks = m.status === 'read' ? '<i class="fa-solid fa-check-double text-[#53bdeb]"></i>'
+            : m.status === 'delivered' ? '<i class="fa-solid fa-check-double text-gray-300/70"></i>'
+            : '<i class="fa-solid fa-check text-gray-300/70"></i>';
+        return `<div class="group flex justify-end items-end gap-1" id="msg-${m.id}">${actionsHtml(m, i, lastIdx, false)}
+            <div class="bg-wa-darkBubbleOut text-gray-100 rounded-xl rounded-tr-none px-3 py-1.5 max-w-[82%] sm:max-w-md shadow-md text-xs">
+                ${quoteHtml(m.replyTo)}
+                <div class="whitespace-pre-wrap break-words leading-relaxed">${formatText(m.text)}</div>
+                <div class="text-[10px] text-emerald-100/60 text-right mt-0.5 flex items-center justify-end gap-1"><span>${time}</span>${ticks}</div>
+            </div></div>`;
+    }
+    // bot
+    const ch = findCharById(m.senderId);
+    const name = ch ? ch.name : (m.senderName || 'AI');
+    const color = ch ? ch.color : validColor(m.senderColor || '#38bdf8');
+    const avatar = ch ? ch.avatar : m.senderAvatar;
+    const prev = state.chat[i - 1];
+    const cont = prev && prev.type === 'bot' && prev.senderId === m.senderId && dayKey(prev.ts) === dayKey(m.ts);
+    const avatarHtml = cont ? '<div class="w-7 shrink-0"></div>' : imgTag(avatar, name, color, 'w-7 h-7 rounded-full object-cover shrink-0 mt-1');
+    return `<div class="group flex items-end gap-1 ${cont ? '!mt-0.5' : ''}" id="msg-${m.id}">
+        <div class="flex gap-2 max-w-[85%] sm:max-w-md">${avatarHtml}
+            <div class="bg-wa-darkBubbleIn text-gray-100 rounded-xl ${cont ? '' : 'rounded-tl-none'} px-3 py-1.5 shadow-md text-xs border border-gray-800/50 min-w-0">
+                ${cont ? '' : `<div class="font-bold text-[11px] mb-0.5" style="color:${color}">${escapeHtml(name)}</div>`}
+                ${quoteHtml(m.replyTo)}
+                <div class="whitespace-pre-wrap break-words leading-relaxed">${formatText(m.text)}</div>
+                <div class="text-[10px] text-gray-400 text-right mt-0.5">${time}</div>
+            </div></div>${actionsHtml(m, i, lastIdx, true)}</div>`;
+}
+function typingHtml(ch) {
+    const dot = d => `<span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay:${d}s"></span>`;
+    return `<div class="flex items-end gap-2">${imgTag(ch.avatar, ch.name, ch.color, 'w-7 h-7 rounded-full object-cover shrink-0')}
+        <div class="bg-wa-darkBubbleIn border border-gray-800/50 rounded-xl rounded-tl-none px-3 py-1.5 shadow-md">
+            <div class="font-bold text-[11px] mb-0.5" style="color:${ch.color}">${escapeHtml(ch.name)}</div>
+            <span class="inline-flex gap-1 items-center h-3">${dot(0)}${dot(0.2)}${dot(0.4)}</span>
+        </div></div>`;
+}
+function renderMessages(forceScroll = false) {
+    const c = $('messagesContainer');
+    const nearBottom = c.scrollHeight - c.scrollTop - c.clientHeight < 140;
+    const prevTop = c.scrollTop;
+    let html = '', lastDay = '';
+    let lastIdx = state.chat.length - 1;
+    while (lastIdx > 0 && state.chat[lastIdx].type === 'ruleSuggest') lastIdx--;
+    state.chat.forEach((m, i) => {
+        const d = dayKey(m.ts);
+        if (d !== lastDay) {
+            html += `<div class="flex justify-center my-2"><span class="bg-wa-darkHeader/90 border border-gray-800 text-gray-300 text-[11px] px-3 py-1 rounded-lg shadow">${escapeHtml(dayLabel(m.ts))}</span></div>`;
+            lastDay = d;
+        }
+        html += messageHtml(m, i, lastIdx);
+    });
+    if (state.typing) html += typingHtml(state.typing);
+    c.innerHTML = html;
+    c.scrollTop = (forceScroll || nearBottom) ? c.scrollHeight : prevTop;
+    updateScrollBtn();
+}
+function updateScrollBtn() {
+    const c = $('messagesContainer');
+    $('scrollBottomBtn').classList.toggle('hidden', c.scrollHeight - c.scrollTop - c.clientHeight < 200);
+}
+function updateHeader() {
+    const s = state.settings;
+    $('groupNameDisplay').textContent = s.groupName || 'Grup Roleplay';
+    document.title = s.groupName || 'Grup Roleplay';
+    const sub = $('groupSubtext');
+    if (state.typing) {
+        sub.textContent = `${state.typing.name} sedang mengetik…`;
+        sub.classList.add('text-emerald-400'); sub.classList.remove('text-gray-400');
+    } else {
+        sub.textContent = ['Kamu', ...state.characters.map(c => c.name)].join(', ');
+        sub.classList.remove('text-emerald-400'); sub.classList.add('text-gray-400');
+    }
+    const ga = $('groupAvatar');
+    ga.dataset.fb = `${s.groupName || 'G'}|#475569`;
+    ga.src = safeUrl(s.groupAvatar) || initialsAvatar(s.groupName || 'G', '#475569');
+    const st = $('apiKeyStatusText');
+    st.textContent = s.apiKey ? 'Pengaturan' : 'Set API Key';
+    $('btnSettings').classList.toggle('animate-pulse', !s.apiKey);
+    $('userInput').placeholder = state.characters.length
+        ? `Ketik pesan... gunakan @${state.characters[0].tag}` : 'Tambahkan karakter lewat ikon grup';
+}
+function updateSendButton() {
+    const b = $('btnSend');
+    b.innerHTML = state.busy ? '<i class="fa-solid fa-stop text-sm"></i>' : '<i class="fa-solid fa-paper-plane text-sm"></i>';
+    b.classList.toggle('bg-red-600', state.busy);
+    b.classList.toggle('hover:bg-red-500', state.busy);
+    b.classList.toggle('bg-indigo-600', !state.busy);
+    b.classList.toggle('hover:bg-indigo-500', !state.busy);
+    b.setAttribute('aria-label', state.busy ? 'Hentikan' : 'Kirim');
+}
+function renderCharacterList() {
+    const box = $('characterListContainer');
+    if (!state.characters.length) {
+        box.innerHTML = '<div class="text-xs text-gray-500 text-center py-4">Belum ada karakter.</div>';
+        return;
+    }
+    box.innerHTML = state.characters.map(c => `
+        <div class="p-2.5 bg-wa-darkHeader rounded-lg border border-gray-800 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 overflow-hidden">
+                ${imgTag(c.avatar, c.name, c.color, 'w-9 h-9 rounded-full object-cover shrink-0')}
+                <div class="min-w-0">
+                    <div class="text-xs font-semibold truncate" style="color:${c.color}">${escapeHtml(c.name)} <span class="text-gray-500 font-normal">@${escapeHtml(c.tag)}</span>${(c.rules || []).length ? ` <span class="text-[10px] text-indigo-300/80 font-normal" title="Aturan tambahan"><i class="fa-solid fa-graduation-cap"></i> ${c.rules.length}</span>` : ''}</div>
+                    <div class="text-[10px] text-gray-400 truncate">${escapeHtml(snippet(c.prompt, 70))}</div>
+                </div>
+            </div>
+            <div class="flex shrink-0">
+                <button data-char-action="edit" data-id="${c.id}" title="Edit" class="text-gray-400 hover:text-indigo-300 p-1.5 text-xs"><i class="fa-solid fa-pen"></i></button>
+                <button data-char-action="delete" data-id="${c.id}" title="Hapus" class="text-gray-500 hover:text-red-400 p-1.5 text-xs"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+        </div>`).join('');
+}
+
+/* ============================================================
+   MENTION POPUP
+   ============================================================ */
+function updateMention() {
+    const ta = $('userInput');
+    const m = ta.value.slice(0, ta.selectionStart).match(/(?:^|\s)@(\w*)$/);
+    if (!m) return closeMention();
+    const q = m[1].toLowerCase();
+    const items = state.characters
+        .filter(c => c.tag.toLowerCase().startsWith(q) || c.name.toLowerCase().includes(q))
+        .map(c => ({ tag: c.tag, name: c.name, color: c.color, avatar: c.avatar }));
+    if (state.characters.length > 1 && 'semua'.startsWith(q)) {
+        items.push({ tag: 'semua', name: 'Tag semua karakter', color: '#818cf8', avatar: '' });
+    }
+    if (!items.length) return closeMention();
+    state.mention = { items, index: 0, open: true };
+    renderMention();
+}
+function renderMention() {
+    const list = $('mentionList');
+    list.innerHTML = state.mention.items.map((it, i) => `
+        <div data-mention="${i}" class="px-3 py-2 text-xs flex items-center gap-2 cursor-pointer transition ${i === state.mention.index ? 'bg-indigo-900/50' : 'hover:bg-indigo-900/30'}">
+            ${imgTag(it.avatar, it.name, it.color, 'w-6 h-6 rounded-full object-cover')}
+            <div><span class="font-bold" style="color:${it.color}">@${escapeHtml(it.tag)}</span>
+            <span class="text-gray-400 text-[10px] ml-1">${escapeHtml(it.name)}</span></div>
+        </div>`).join('');
+    $('mentionPopup').classList.remove('hidden');
+    const active = list.querySelector(`[data-mention="${state.mention.index}"]`);
+    if (active) active.scrollIntoView({ block: 'nearest' });
+}
+function closeMention() {
+    state.mention.open = false;
+    $('mentionPopup').classList.add('hidden');
+}
+function selectMention(i) {
+    const it = state.mention.items[i];
+    if (!it) return;
+    const ta = $('userInput');
+    const caret = ta.selectionStart;
+    const before = ta.value.slice(0, caret).replace(/@\w*$/, '@' + it.tag + ' ');
+    ta.value = before + ta.value.slice(caret);
+    ta.setSelectionRange(before.length, before.length);
+    closeMention();
+    autosize();
+    ta.focus();
+}
+function autosize() {
+    const ta = $('userInput');
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+}
+
+/* ============================================================
+   PROMPT BUILDER
+   ============================================================ */
+function contextMessages() {
+    const arr = state.chat.filter(m => m.type === 'user' || m.type === 'bot');
+    const sel = arr.slice(-Math.max(1, state.settings.contextMessages));
+    const out = [];
+    let total = 0;
+    for (let i = sel.length - 1; i >= 0; i--) {
+        total += sel[i].text.length + 60;
+        if (total > 16000 && out.length) break;
+        out.unshift(sel[i]);
+    }
+    return out;
+}
+function speakerName(m) {
+    if (m.type === 'user') return state.settings.userName || 'Pengguna';
+    const ch = findCharById(m.senderId);
+    return ch ? ch.name : (m.senderName || 'AI');
+}
+function rulesSection(char, userName) {
+    const g = state.settings.globalRules || [], c = char.rules || [];
+    if (!g.length && !c.length) return '';
+    const fmt = a => a.map(r => '- ' + r).join('\n');
+    return [
+        '\n## Aturan tambahan dari pengguna (WAJIB diikuti; bila bertentangan dengan persona di atas, aturan ini yang berlaku)',
+        `Kata "pengguna" di aturan merujuk ke ${userName}. Bila dua aturan saling bertentangan, aturan yang paling bawah (terbaru) yang berlaku.`,
+        g.length ? 'Berlaku untuk semua karakter:\n' + fmt(g) : '',
+        c.length ? `Khusus untuk ${char.name}:\n` + fmt(c) : ''
+    ].filter(Boolean).join('\n');
+}
+function buildMessages(char) {
+    const s = state.settings;
+    const userName = s.userName || 'Pengguna';
+    const others = state.characters.filter(c => c.id !== char.id).map(c => `${c.name} (@${c.tag})`);
+    const sys = [
+        `Kamu sedang memerankan "${char.name}" dalam simulasi obrolan grup WhatsApp (roleplay fiksi).`,
+        `\n## Persona dan aturan karakter\n${char.prompt || '(tidak ada instruksi khusus)'}`,
+        rulesSection(char, userName),
+        `\n## Konteks grup`,
+        `Nama grup: ${s.groupName || 'Grup Roleplay'}`,
+        `Anggota: ${userName} (pengguna manusia)${others.length ? ', ' + others.join(', ') : ''}.`,
+        s.userPersona ? `Tentang ${userName}: ${s.userPersona}` : '',
+        s.scenario ? `Skenario / latar adegan: ${s.scenario}` : '',
+        `\n## Aturan format`,
+        `- Balas HANYA sebagai ${char.name}. Jangan menulis pesan untuk anggota lain, jangan menulis narasi di luar karakter, dan jangan mengawali dengan namamu atau format "Nama:" atau jam.`,
+        `- Ikuti bahasa, dialek, kosakata, dan gaya bicara yang ditetapkan di persona. Jika persona tidak menetapkan bahasa, pakai bahasa yang dipakai lawan bicara (default Bahasa Indonesia).`,
+        `- Tulis seperti pesan WhatsApp sungguhan: natural dan ringkas, kecuali persona atau situasi menuntut lebih panjang.`,
+        `- Kamu boleh menyapa atau memanggil anggota lain dengan @Tag mereka bila memang wajar.`,
+        s.splitBubbles ? `- Jika ingin mengirim beberapa pesan terpisah berturut-turut, pisahkan dengan satu baris berisi tiga tanda hubung (---). Maksimal 3 pesan, dan hanya bila terasa natural.` : '',
+        `- Tetap dalam karakter. Jangan menyebut dirimu model AI atau sistem kecuali persona memintanya.`
+    ].filter(Boolean).join('\n');
+
+    const lines = contextMessages().map(m => {
+        let l = `[${fmtTime(m.ts)}] ${speakerName(m)}`;
+        if (m.replyTo) l += ` (membalas ${m.replyTo.name}: "${snippet(m.replyTo.text, 80)}")`;
+        return `${l}: ${m.text}`;
+    });
+    const user = `Riwayat obrolan grup terbaru (lama ke baru):\n\n${lines.join('\n')}\n\n---\nSekarang giliran ${char.name} membalas. Tulis hanya isi pesan ${char.name}.`;
+    return [{ role: 'system', content: sys }, { role: 'user', content: user }];
+}
+function cleanReply(raw, char) {
+    let t = String(raw).trim();
+    t = t.replace(/^\s*\[\d{1,2}[:.]\d{2}\]\s*/, '');
+    t = t.replace(new RegExp('^\\s*\\**' + escapeRegExp(char.name) + '\\**\\s*[:：]\\s*', 'i'), '');
+    const names = [state.settings.userName, ...state.characters.filter(c => c.id !== char.id).map(c => c.name)].filter(Boolean);
+    if (names.length) {
+        const re = new RegExp('\\n\\s*(?:\\[\\d{1,2}[:.]\\d{2}\\]\\s*)?\\**(?:' + names.map(escapeRegExp).join('|') + ')\\**\\s*[:：]', 'i');
+        const idx = t.search(re);
+        if (idx > 0) t = t.slice(0, idx);
+    }
+    if (/^["“][^"“”]*["”]$/.test(t)) t = t.slice(1, -1);
+    return t.trim();
+}
+
+/* ============================================================
+   API
+   ============================================================ */
+class ApiError extends Error {
+    constructor(msg, retry = false) { super(msg); this.retry = retry; }
+}
+async function callApi(messages, signal, opts = {}) {
+    const s = state.settings;
+    if (!s.apiKey) throw new ApiError('API Key belum diisi. Buka Pengaturan (ikon kunci) untuk memasukkannya.');
+    const url = s.baseUrl.replace(/\/+$/, '') + '/chat/completions';
+    let lastErr;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        if (signal.aborted) throw abortErr();
+        const ctrl = new AbortController();
+        const onAbort = () => ctrl.abort();
+        signal.addEventListener('abort', onAbort);
+        let timedOut = false;
+        const timer = setTimeout(() => { timedOut = true; ctrl.abort(); }, 90000);
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${s.apiKey}` },
+                body: JSON.stringify({ model: s.model, messages, temperature: opts.temperature ?? s.temperature, max_tokens: opts.maxTokens ?? s.maxTokens }),
+                signal: ctrl.signal
+            });
+            if (!res.ok) {
+                const j = await res.json().catch(() => ({}));
+                const raw = j.error?.message || j.error || j.message || res.statusText || ('HTTP ' + res.status);
+                throw new ApiError(`Error ${res.status}: ${typeof raw === 'string' ? raw : JSON.stringify(raw)}`, [429, 500, 502, 503, 504].includes(res.status));
+            }
+            const data = await res.json();
+            const choice = data.choices?.[0];
+            const content = choice?.message?.content;
+            if (typeof content === 'string' && content.trim()) return content;
+            if (choice?.finish_reason === 'length') throw new ApiError('Balasan terpotong sebelum selesai (token habis). Naikkan "Maks token" di Pengaturan.');
+            throw new ApiError('Model mengembalikan balasan kosong.', true);
+        } catch (err) {
+            if (signal.aborted) throw abortErr();
+            if (err instanceof ApiError) {
+                lastErr = err;
+                if (!err.retry) throw err;
+            } else {
+                lastErr = new ApiError(timedOut ? 'Permintaan melebihi batas waktu (90 detik).'
+                    : `Gagal terhubung ke server (${err.message}). Periksa koneksi, API key, atau kebijakan CORS/proxy.`, true);
+            }
+        } finally {
+            clearTimeout(timer);
+            signal.removeEventListener('abort', onAbort);
+        }
+        if (attempt < 2) await sleep(1200 * (attempt + 1), signal);
+    }
+    throw lastErr;
+}
+async function requestReply(char, signal) {
+    const raw = await callApi(buildMessages(char), signal);
+    const text = cleanReply(raw, char);
+    if (!text) throw new ApiError('Balasan kosong setelah dibersihkan.', false);
+    if (!state.settings.splitBubbles) return [text];
+    const parts = text.split(/\n\s*-{3,}\s*\n/).map(p => p.trim()).filter(Boolean).slice(0, 4);
+    return parts.length ? parts : [text];
+}
+
+/* ============================================================
+   ALUR PERCAKAPAN
+   ============================================================ */
+function addMessage(msg) {
+    msg.id = msg.id || uid();
+    msg.ts = msg.ts || Date.now();
+    state.chat.push(msg);
+    return msg;
+}
+function pushBot(char, text) {
+    return addMessage({ type: 'bot', text, senderId: char.id, senderName: char.name, senderColor: char.color, senderAvatar: char.avatar });
+}
+function setUserStatus(id, status) {
+    const m = state.chat.find(x => x.id === id);
+    if (m && m.type === 'user') { m.status = status; }
+}
+async function runResponses(targets, userMsgId) {
+    if (state.busy) return;
+    state.busy = true;
+    state.abort = new AbortController();
+    updateSendButton();
+    const signal = state.abort.signal;
+    const queue = [...targets];
+    let extra = 0;
+    try {
+        if (userMsgId) { await sleep(350, signal); setUserStatus(userMsgId, 'delivered'); renderMessages(); }
+        let first = true;
+        while (queue.length) {
+            const char = queue.shift();
+            if (!findCharById(char.id)) continue;
+            if (first && userMsgId) { setUserStatus(userMsgId, 'read'); first = false; }
+            state.typing = char; updateHeader(); renderMessages(true);
+            const started = Date.now();
+            let parts;
+            try {
+                parts = await requestReply(char, signal);
+            } catch (err) {
+                if (err.name === 'AbortError') throw err;
+                state.typing = null;
+                addMessage({ type: 'error', text: err.message, senderName: char.name, retryCharId: char.id });
+                persist(); updateHeader(); renderMessages(true);
+                continue;
+            }
+            if (state.settings.typingDelay) {
+                const target = clamp(700 + parts.join(' ').length * 18, 900, 4200);
+                const wait = target - (Date.now() - started);
+                if (wait > 0) await sleep(wait, signal);
+            }
+            for (let i = 0; i < parts.length; i++) {
+                if (i > 0) {
+                    state.typing = char; renderMessages(true);
+                    await sleep(clamp(parts[i].length * 18, 500, 1800), signal);
+                }
+                state.typing = null;
+                pushBot(char, parts[i]);
+                persist(); updateHeader(); renderMessages(true);
+            }
+            if (state.settings.chainReplies) {
+                const mentioned = parseMentions(parts.join('\n'), false)
+                    .filter(c => c.id !== char.id && !queue.some(q => q.id === c.id));
+                for (const c of mentioned) {
+                    if (extra >= CHAIN_LIMIT) break;
+                    queue.push(c); extra++;
+                }
+            }
+        }
+    } catch (err) {
+        if (err.name !== 'AbortError') { console.error(err); toast('Terjadi kesalahan tak terduga: ' + err.message, 'error'); }
+        else toast('Dihentikan.');
+    } finally {
+        if (userMsgId) { const m = state.chat.find(x => x.id === userMsgId); if (m && m.status !== 'read' && !queue.length) m.status = m.status || 'delivered'; }
+        state.busy = false; state.abort = null; state.typing = null;
+        updateSendButton(); updateHeader(); flushChat(); renderMessages(true);
+    }
+}
+function pickAutoTarget(userMsg) {
+    if (!state.characters.length) return [];
+    if (userMsg.replyTo) {
+        const orig = state.chat.find(x => x.id === userMsg.replyTo.id);
+        const c = orig && orig.type === 'bot' ? findCharById(orig.senderId) : null;
+        if (c) return [c];
+    }
+    if (state.settings.autoReplyNoTag) return [state.characters[Math.floor(Math.random() * state.characters.length)]];
+    return [];
+}
+async function sendUserMessage() {
+    if (state.busy) { toast('Tunggu balasan selesai, atau tekan tombol Stop.'); return; }
+    const ta = $('userInput');
+    const text = ta.value.trim();
+    if (!text) return;
+    closeMention(); closeEmoji();
+    ta.value = ''; autosize();
+    if (/^\/(ajar|aturan)(\s|$)/i.test(text)) { handleCommand(text); return; }
+
+    const msg = addMessage({ type: 'user', text, status: 'sent', replyTo: state.replyTo ? { ...state.replyTo } : null });
+    cancelReply();
+    persist(); renderMessages(true);
+
+    let targets = parseMentions(text);
+    if (!targets.length) {
+        targets = pickAutoTarget(msg);
+        if (!targets.length) {
+            msg.status = 'delivered'; persist(); renderMessages();
+            if (shouldLearn(text)) maybeSuggestRule(msg, [], '');
+            toast(state.characters.length ? 'Tag karakter dengan @Nama agar ada yang membalas.' : 'Belum ada karakter. Tambahkan lewat ikon grup.');
+            return;
+        }
+    }
+    const ref = referenceBotText(msg, targets);
+    await runResponses(targets, msg.id);
+    if (shouldLearn(text)) maybeSuggestRule(msg, targets, ref);
+}
+function stopResponses() { if (state.abort) state.abort.abort(); }
+
+function regenerateLast() {
+    if (state.busy) return;
+    let li = state.chat.length - 1;
+    while (li >= 0 && state.chat[li].type === 'ruleSuggest') li--;
+    const last = state.chat[li];
+    if (!last || last.type !== 'bot') return;
+    const char = findCharById(last.senderId);
+    if (!char) { toast('Karakter ini sudah dihapus.', 'error'); return; }
+    state.chat.length = li + 1;
+    while (state.chat.length) {
+        const l = state.chat[state.chat.length - 1];
+        if (l.type === 'bot' && l.senderId === char.id) state.chat.pop(); else break;
+    }
+    persist(); renderMessages(true);
+    runResponses([char], null);
+}
+function retryError(id) {
+    if (state.busy) return;
+    const idx = state.chat.findIndex(m => m.id === id);
+    if (idx < 0) return;
+    const char = findCharById(state.chat[idx].retryCharId);
+    state.chat.splice(idx, 1);
+    persist(); renderMessages(true);
+    if (!char) { toast('Karakter ini sudah dihapus.', 'error'); return; }
+    runResponses([char], null);
+}
+function deleteMessage(id) {
+    state.chat = state.chat.filter(m => m.id !== id);
+    if (state.replyTo && state.replyTo.id === id) cancelReply();
+    persist(); renderMessages();
+}
+
+/* Reply */
+function startReply(id) {
+    const m = state.chat.find(x => x.id === id);
+    if (!m || (m.type !== 'user' && m.type !== 'bot')) return;
+    const ch = m.type === 'bot' ? findCharById(m.senderId) : null;
+    state.replyTo = {
+        id: m.id,
+        name: m.type === 'user' ? (state.settings.userName || 'Kamu') : speakerName(m),
+        text: snippet(m.text, 120),
+        color: m.type === 'user' ? '#53bdeb' : (ch ? ch.color : validColor(m.senderColor || '#818cf8'))
+    };
+    $('replyBarName').textContent = state.replyTo.name;
+    $('replyBarName').style.color = state.replyTo.color;
+    $('replyBarText').textContent = state.replyTo.text;
+    $('replyBarInner').style.borderColor = state.replyTo.color;
+    $('replyBar').classList.remove('hidden');
+    $('userInput').focus();
+}
+function cancelReply() {
+    state.replyTo = null;
+    $('replyBar').classList.add('hidden');
+}
+function jumpTo(id) {
+    const el = $('msg-' + id);
+    if (!el) { toast('Pesan asli sudah tidak ada.'); return; }
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+}
+
+/* ============================================================
+   ATURAN KARAKTER (belajar dari arahan pengguna)
+   ============================================================ */
+function addRules(list, rules) {
+    let added = 0;
+    for (const r of rules) {
+        if (list.some(x => x.toLowerCase() === r.toLowerCase())) continue;
+        if (list.length >= MAX_RULES) { toast(`Maksimal ${MAX_RULES} aturan. Rapikan atau hapus beberapa dulu.`, 'error', 4000); break; }
+        list.push(r); added++;
+    }
+    return added;
+}
+function shouldLearn(text) {
+    return !!(state.settings.learnSuggest && state.settings.apiKey && INSTRUCTION_RE.test(text.replace(/@\w+/g, ' ')));
+}
+function referenceBotText(userMsg, targets) {
+    let m = null;
+    if (userMsg.replyTo) m = state.chat.find(x => x.id === userMsg.replyTo.id && x.type === 'bot');
+    if (!m && targets[0]) {
+        for (let i = state.chat.length - 1; i >= 0; i--) {
+            const x = state.chat[i];
+            if (x.type === 'bot' && x.senderId === targets[0].id) { m = x; break; }
+        }
+    }
+    return m ? snippet(m.text, 300) : '';
+}
+function parseRuleOutput(raw) {
+    const t = String(raw || '').trim();
+    if (!t || /^NONE\b/i.test(t)) return [];
+    return parseRuleLines(t.split('\n')).slice(0, 3).map(r => r.slice(0, 200));
+}
+async function maybeSuggestRule(userMsg, targets, ref) {
+    try {
+        const s = state.settings;
+        const existing = [...(s.globalRules || []), ...targets.flatMap(c => c.rules || [])];
+        const sys = [
+            'Kamu membantu mengubah arahan pengguna menjadi aturan perilaku tetap untuk karakter dalam roleplay obrolan grup.',
+            '- Jika pesan pengguna berisi arahan yang seharusnya berlaku seterusnya (cara bicara, bahasa, tingkat kesopanan, sapaan atau panggilan, kebiasaan, hal yang dilarang atau diwajibkan), tulis 1 sampai 3 aturan.',
+            '- Jika pesan hanya pertanyaan, obrolan biasa, atau koreksi sekali pakai yang tidak perlu diingat, jawab persis: NONE',
+            'Format: satu aturan per baris diawali "- ", berupa kalimat perintah singkat dalam Bahasa Indonesia. Sebut pengguna sebagai "pengguna" (jangan memakai "aku" atau "kamu" untuk pengguna). Jangan mengulang aturan yang sudah ada. Tanpa penjelasan tambahan.'
+        ].join('\n');
+        const names = targets.map(c => c.name).join(', ') || 'semua karakter';
+        const user = [
+            `Karakter yang dituju: ${names}`,
+            ref ? `Pesan terakhir karakter itu (mungkin yang sedang dikoreksi): "${ref}"` : '',
+            `Pesan pengguna: "${userMsg.text}"`,
+            `Aturan yang sudah ada:\n${existing.length ? existing.map(r => '- ' + r).join('\n') : '(belum ada)'}`
+        ].filter(Boolean).join('\n\n');
+        const raw = await callApi([{ role: 'system', content: sys }, { role: 'user', content: user }],
+            new AbortController().signal, { temperature: 0.2, maxTokens: 600 });
+        const rules = parseRuleOutput(raw).filter(r => !existing.some(x => x.toLowerCase() === r.toLowerCase()));
+        if (!rules.length) return;
+        addMessage({ type: 'ruleSuggest', text: rules.join('\n'), charIds: targets.map(c => c.id), status: 'pending' });
+        persist(); renderMessages(true);
+    } catch (e) { /* saran aturan bersifat opsional; gagal diam-diam */ }
+}
+function saveRuleSuggestion(id, scope) {
+    const m = state.chat.find(x => x.id === id);
+    if (!m) return;
+    const rules = parseRuleLines(m.text);
+    if (!rules.length) { toast('Aturan masih kosong.', 'error'); return; }
+    let label;
+    if (scope === 'global') {
+        addRules(state.settings.globalRules, rules); saveSettings(); label = 'semua karakter';
+    } else {
+        const chars = (m.charIds || []).map(findCharById).filter(Boolean);
+        if (!chars.length) { toast('Karakter tidak ditemukan.', 'error'); return; }
+        chars.forEach(c => addRules(c.rules, rules));
+        saveCharacters(); renderCharacterList(); label = chars.map(c => c.name).join(', ');
+    }
+    m.text = rules.join('\n'); m.status = 'saved'; m.savedTo = label;
+    persist(); renderMessages();
+}
+function handleCommand(text) {
+    const m = text.match(/^\/(\w+)\s*([\s\S]*)$/);
+    const cmd = m[1].toLowerCase();
+    let body = m[2].trim();
+    const tags = [];
+    let tm;
+    while ((tm = body.match(/^@(\w+)\s*/))) { tags.push(tm[1].toLowerCase()); body = body.slice(tm[0].length); }
+    const isGlobal = tags.some(t => ['semua', 'all', 'everyone'].includes(t));
+    const targets = isGlobal ? [] : parseMentions(tags.map(t => '@' + t).join(' '), false);
+    const usage = 'Pakai: /ajar @Nama aturan (atau /ajar @semua aturan). Lihat aturan: /aturan @Nama';
+    if (cmd === 'aturan') {
+        if (isGlobal) { openSettings(); setTimeout(() => $('setGlobalRules').focus(), 60); }
+        else if (targets.length) {
+            openCharModal(targets[0].id);
+            setTimeout(() => { const t = $('charRules'); t.scrollIntoView({ block: 'center' }); t.focus(); }, 80);
+        } else toast(usage, 'info', 4000);
+        return;
+    }
+    if (!tags.length) { toast(usage, 'info', 4000); return; }
+    if (!isGlobal && !targets.length) { toast('Karakter tidak ditemukan. ' + usage, 'error', 4500); return; }
+    const rules = parseRuleLines(body.split('\n'));
+    if (!rules.length) { toast(usage, 'info', 4000); return; }
+    let label;
+    if (isGlobal) { addRules(state.settings.globalRules, rules); saveSettings(); label = 'semua karakter'; }
+    else { targets.forEach(c => addRules(c.rules, rules)); saveCharacters(); renderCharacterList(); label = targets.map(c => c.name).join(', '); }
+    addMessage({ type: 'system', text: `📚 Aturan baru untuk ${label}:\n${rules.map(r => '• ' + r).join('\n')}` });
+    persist(); renderMessages(true);
+}
+async function tidyRules(textareaId, btn) {
+    const ta = $(textareaId);
+    const rules = parseRuleLines(ta.value);
+    if (rules.length < 2) { toast('Belum cukup aturan untuk dirapikan.'); return; }
+    if (!state.settings.apiKey) { toast('Isi API Key dulu di Pengaturan.', 'error'); return; }
+    btn.disabled = true;
+    const old = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Merapikan...';
+    try {
+        const sys = 'Kamu merapikan daftar aturan perilaku untuk karakter roleplay. Gabungkan aturan yang duplikat atau tumpang tindih, selesaikan konflik dengan mengutamakan aturan yang LEBIH BARU (yang berada lebih bawah), pertahankan semua makna penting, dan tulis singkat dan jelas. Keluarkan hanya daftar aturan, satu per baris diawali "- ", tanpa penjelasan lain.';
+        const raw = await callApi([{ role: 'system', content: sys }, { role: 'user', content: rules.map(r => '- ' + r).join('\n') }],
+            new AbortController().signal, { temperature: 0.2, maxTokens: 1500 });
+        const out = parseRuleLines(String(raw).split('\n'));
+        if (!out.length) throw new Error('hasil kosong');
+        ta.value = out.join('\n');
+        toast(`Dirapikan: ${rules.length} menjadi ${out.length} aturan. Periksa lalu simpan.`, 'ok', 4500);
+    } catch (e) {
+        toast('Gagal merapikan: ' + e.message, 'error', 4000);
+    } finally { btn.disabled = false; btn.innerHTML = old; }
+}
+
+/* Chat utilities */
+function clearChat() {
+    if (state.busy) stopResponses();
+    if (!confirm('Bersihkan seluruh riwayat percakapan?')) return;
+    state.chat = [{ id: uid(), type: 'system', text: 'Riwayat percakapan dibersihkan.', ts: Date.now() }];
+    cancelReply(); flushChat(); renderMessages(true);
+}
+function exportChat() {
+    const lines = state.chat.filter(m => m.type === 'user' || m.type === 'bot').map(m => {
+        const d = new Date(m.ts);
+        const stamp = d.toLocaleDateString('en-GB') + ', ' + fmtTime(m.ts);
+        return `${stamp} - ${speakerName(m)}: ${m.text.replace(/\n/g, '\n   ')}`;
+    });
+    if (!lines.length) { toast('Belum ada percakapan untuk diekspor.'); return; }
+    downloadFile(`chat-${(state.settings.groupName || 'grup').replace(/\W+/g, '_')}.txt`, lines.join('\n'), 'text/plain');
+}
+
+/* ============================================================
+   SIDEBAR, MODAL
+   ============================================================ */
+function toggleSidebar(force) {
+    const p = $('sidebarPanel');
+    const open = force !== undefined ? force : p.classList.contains('-translate-x-full');
+    p.classList.toggle('-translate-x-full', !open);
+    $('sidebarBackdrop').classList.toggle('hidden', !open);
+}
+function openModal(id) { $(id).classList.remove('hidden'); }
+function closeModal(id) { $(id).classList.add('hidden'); }
+function closeEmoji() { $('emojiPanel').classList.add('hidden'); }
+
+/* Settings */
+function openSettings() {
+    const s = state.settings;
+    gdFillSettings();
+    $('setApiKey').value = s.apiKey; $('setApiKey').type = 'password';
+    $('setModel').value = s.model; $('setBaseUrl').value = s.baseUrl;
+    $('setGroupName').value = s.groupName; $('setGroupAvatar').value = s.groupAvatar;
+    $('setUserName').value = s.userName; $('setUserPersona').value = s.userPersona; $('setScenario').value = s.scenario;
+    $('setContext').value = s.contextMessages; $('setMaxTokens').value = s.maxTokens;
+    $('setTemp').value = s.temperature; $('tempLabel').textContent = Number(s.temperature).toFixed(1);
+    $('tgTyping').checked = s.typingDelay; $('tgSplit').checked = s.splitBubbles;
+    $('tgAutoReply').checked = s.autoReplyNoTag; $('tgChain').checked = s.chainReplies;
+    $('tgLearn').checked = s.learnSuggest; $('setGlobalRules').value = (s.globalRules || []).join('\n');
+    const dl = $('modelList');
+    if (!dl.children.length) fillModelList(['grok-4', 'grok-3', 'grok-3-mini', s.model]);
+    openModal('settingsModal');
+}
+function fillModelList(ids) {
+    $('modelList').innerHTML = [...new Set(ids.filter(Boolean))].map(i => `<option value="${escapeHtml(i)}"></option>`).join('');
+}
+function saveSettingsFromForm() {
+    const s = state.settings;
+    s.apiKey = $('setApiKey').value.trim();
+    s.model = $('setModel').value.trim() || DEFAULT_SETTINGS.model;
+    s.baseUrl = $('setBaseUrl').value.trim() || DEFAULT_SETTINGS.baseUrl;
+    if (!/^https?:\/\//i.test(s.baseUrl)) { toast('Base URL harus diawali http:// atau https://', 'error'); return; }
+    s.groupName = $('setGroupName').value.trim() || DEFAULT_SETTINGS.groupName;
+    s.groupAvatar = safeUrl($('setGroupAvatar').value);
+    s.userName = $('setUserName').value.trim() || DEFAULT_SETTINGS.userName;
+    s.userPersona = $('setUserPersona').value.trim();
+    s.scenario = $('setScenario').value.trim();
+    s.contextMessages = clamp(parseInt($('setContext').value, 10) || 30, 4, 100);
+    s.maxTokens = clamp(parseInt($('setMaxTokens').value, 10) || 1024, 64, 8000);
+    s.temperature = clamp(parseFloat($('setTemp').value) || 0, 0, 2);
+    s.typingDelay = $('tgTyping').checked; s.splitBubbles = $('tgSplit').checked;
+    s.autoReplyNoTag = $('tgAutoReply').checked; s.chainReplies = $('tgChain').checked;
+    s.learnSuggest = $('tgLearn').checked; s.globalRules = parseRuleLines($('setGlobalRules').value);
+    saveSettings(); updateHeader(); renderMessages();
+    closeModal('settingsModal');
+    toast('Pengaturan disimpan.', 'ok');
+}
+async function loadModels() {
+    const key = $('setApiKey').value.trim();
+    const base = ($('setBaseUrl').value.trim() || DEFAULT_SETTINGS.baseUrl).replace(/\/+$/, '');
+    if (!key) { toast('Isi API Key dulu.', 'error'); return; }
+    const btn = $('btnLoadModels');
+    btn.disabled = true;
+    try {
+        const res = await fetch(base + '/models', { headers: { 'Authorization': `Bearer ${key}` } });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const j = await res.json();
+        const ids = (j.data || []).map(m => m.id).filter(Boolean);
+        if (!ids.length) throw new Error('daftar kosong');
+        fillModelList(ids);
+        toast(`${ids.length} model dimuat. Klik kolom Model untuk memilih.`, 'ok');
+    } catch (e) {
+        toast('Gagal memuat daftar model: ' + e.message, 'error', 4000);
+    } finally { btn.disabled = false; }
+}
+
+/* Character modal */
+function updateAvatarPreview() {
+    const name = $('charName').value.trim() || $('charTag').value.trim() || '?';
+    const color = $('charColor').value;
+    $('charAvatarPreview').dataset.fb = `${name}|${color}`;
+    $('charAvatarPreview').src = safeUrl(state.draftAvatar) || initialsAvatar(name, color);
+}
+function renderAvatarPresets() {
+    const seed = encodeURIComponent($('charTag').value.trim() || $('charName').value.trim() || 'karakter');
+    $('avatarPresets').innerHTML = AVATAR_STYLES.map(st => {
+        const url = `https://api.dicebear.com/7.x/${st}/svg?seed=${seed}`;
+        return `<button type="button" data-preset="${escapeHtml(url)}" class="w-10 h-10 rounded-full overflow-hidden border border-gray-700 hover:border-indigo-500 bg-wa-darkBg"><img src="${escapeHtml(url)}" class="w-full h-full object-cover" alt="${st}" loading="lazy"></button>`;
+    }).join('');
+}
+function openCharModal(id) {
+    const c = id ? findCharById(id) : null;
+    state.editingCharId = c ? c.id : null;
+    state.draftAvatar = c ? c.avatar : '';
+    state.tagTouched = !!c;
+    $('charModalTitle').innerHTML = `<i class="fa-solid fa-user-pen text-indigo-400"></i> ${c ? 'Edit Karakter' : 'Karakter Baru'}`;
+    $('charName').value = c ? c.name : '';
+    $('charTag').value = c ? c.tag : '';
+    $('charColor').value = c ? c.color : '#a855f7';
+    $('charAvatarUrl').value = c && !c.avatar.startsWith('data:') ? c.avatar : '';
+    $('charPrompt').value = c ? c.prompt : '';
+    $('charRules').value = c ? (c.rules || []).join('\n') : '';
+    $('charError').classList.add('hidden');
+    renderAvatarPresets(); updateAvatarPreview();
+    openModal('charModal');
+    setTimeout(() => $('charName').focus(), 50);
+}
+function saveCharFromForm() {
+    const name = $('charName').value.trim();
+    const tag = sanitizeTag($('charTag').value || name);
+    const prompt = $('charPrompt').value.trim();
+    const err = msg => { const e = $('charError'); e.textContent = msg; e.classList.remove('hidden'); };
+    if (!name) return err('Nama tampilan wajib diisi.');
+    if (!tag) return err('Tag hanya boleh huruf, angka, dan garis bawah.');
+    if (['semua', 'all', 'everyone'].includes(tag.toLowerCase())) return err('Tag ini dipakai untuk memanggil semua karakter. Pilih tag lain.');
+    if (state.characters.some(c => c.id !== state.editingCharId && c.tag.toLowerCase() === tag.toLowerCase())) return err('Tag sudah dipakai karakter lain.');
+    if (!prompt) return err('System Prompt / Persona wajib diisi.');
+    const data = { name, tag, color: validColor($('charColor').value), avatar: safeUrl(state.draftAvatar), prompt, rules: parseRuleLines($('charRules').value) };
+    if (state.editingCharId) {
+        Object.assign(findCharById(state.editingCharId), data);
+    } else {
+        state.characters.push({ id: 'char_' + uid(), ...data });
+    }
+    saveCharacters(); renderCharacterList(); updateHeader(); renderMessages();
+    closeModal('charModal');
+    toast('Karakter disimpan.', 'ok');
+}
+function deleteCharacter(id) {
+    const c = findCharById(id);
+    if (!c || !confirm(`Hapus karakter @${c.tag}? Pesan lamanya tetap ada di chat.`)) return;
+    state.characters = state.characters.filter(x => x.id !== id);
+    saveCharacters(); renderCharacterList(); updateHeader(); renderMessages();
+}
+function resizeToDataUrl(file, size = 96) {
+    return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+            const cv = document.createElement('canvas');
+            cv.width = cv.height = size;
+            const min = Math.min(img.width, img.height);
+            cv.getContext('2d').drawImage(img, (img.width - min) / 2, (img.height - min) / 2, min, min, 0, 0, size, size);
+            URL.revokeObjectURL(url);
+            resolve(cv.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Gambar tidak dapat dibaca')); };
+        img.src = url;
+    });
+}
+
+/* Impor / ekspor karakter */
+function exportCharacters() {
+    if (!state.characters.length) { toast('Belum ada karakter.'); return; }
+    downloadFile('karakter-roleplay.json', JSON.stringify({ version: 2, characters: state.characters, globalRules: state.settings.globalRules }, null, 2), 'application/json');
+}
+async function importCharacters(file) {
+    try {
+        const j = JSON.parse(await file.text());
+        const list = (Array.isArray(j) ? j : j.characters);
+        if (!Array.isArray(list)) throw new Error('format tidak dikenali');
+        let added = 0, updated = 0;
+        list.map(sanitizeChar).filter(Boolean).forEach(c => {
+            const ex = state.characters.find(x => x.tag.toLowerCase() === c.tag.toLowerCase());
+            if (ex) { const keep = ex.rules; Object.assign(ex, { ...c, id: ex.id }); if (!c.rules.length) ex.rules = keep; updated++; }
+            else {
+                if (state.characters.some(x => x.id === c.id)) c.id = 'char_' + uid();
+                state.characters.push(c); added++;
+            }
+        });
+        saveCharacters(); renderCharacterList(); updateHeader(); renderMessages();
+        if (!Array.isArray(j) && Array.isArray(j.globalRules)) { addRules(state.settings.globalRules, parseRuleLines(j.globalRules)); saveSettings(); }
+        toast(`Impor selesai: ${added} baru, ${updated} diperbarui.`, 'ok');
+    } catch (e) {
+        toast('Gagal impor: ' + e.message, 'error', 4000);
+    }
+}
+
+/* ============================================================
+   INIT & EVENT
+   ============================================================ */
+function init() {
+    state.settings = loadSettings();
+    state.characters = loadCharacters();
+    state.chat = loadChat();
+
+    if (!state.chat.length) {
+        state.chat.push({
+            id: uid(), type: 'system', ts: Date.now(),
+            text: 'Selamat datang! Tag karakter dengan @Nama (atau @semua) untuk mengobrol. Buka ikon kunci untuk mengisi API Key.'
+        });
+        flushChat();
+    }
+    // pesan yang belum "dibaca" saat halaman ditutup di tengah proses dianggap sudah dibaca
+    state.chat.forEach(m => { if (m.type === 'user') m.status = 'read'; });
+
+    saveCharacters(); saveSettings();
+    renderCharacterList(); updateHeader(); updateSendButton(); renderMessages(true);
+
+    EMOJIS.forEach(e => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.textContent = e; b.className = 'hover:bg-gray-700/50 rounded p-0.5';
+        b.addEventListener('click', () => {
+            const ta = $('userInput'), p = ta.selectionStart;
+            ta.value = ta.value.slice(0, p) + e + ta.value.slice(ta.selectionEnd);
+            ta.setSelectionRange(p + e.length, p + e.length); ta.focus(); autosize();
+        });
+        $('emojiPanel').appendChild(b);
+    });
+
+    // header & sidebar
+    $('btnGroupInfo').addEventListener('click', () => toggleSidebar());
+    $('btnSidebar').addEventListener('click', () => toggleSidebar());
+    $('btnCloseSidebar').addEventListener('click', () => toggleSidebar(false));
+    $('sidebarBackdrop').addEventListener('click', () => toggleSidebar(false));
+    $('btnSettings').addEventListener('click', openSettings);
+    gdBind();
+    $('btnExportChat').addEventListener('click', exportChat);
+    $('btnClearChat').addEventListener('click', clearChat);
+    $('btnAddChar').addEventListener('click', () => openCharModal(null));
+    $('btnExportChars').addEventListener('click', exportCharacters);
+    $('btnImportChars').addEventListener('click', () => $('importFile').click());
+    $('importFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) importCharacters(f); e.target.value = ''; });
+    $('characterListContainer').addEventListener('click', e => {
+        const b = e.target.closest('[data-char-action]');
+        if (!b) return;
+        if (b.dataset.charAction === 'edit') openCharModal(b.dataset.id); else deleteCharacter(b.dataset.id);
+    });
+
+    // modal umum
+    document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
+    ['settingsModal', 'charModal'].forEach(id => $(id).addEventListener('mousedown', e => { if (e.target === $(id)) closeModal(id); }));
+
+    // pengaturan
+    $('btnSaveSettings').addEventListener('click', saveSettingsFromForm);
+    $('btnLoadModels').addEventListener('click', loadModels);
+    $('setTemp').addEventListener('input', e => { $('tempLabel').textContent = Number(e.target.value).toFixed(1); });
+    $('btnToggleKey').addEventListener('click', () => {
+        const i = $('setApiKey'); i.type = i.type === 'password' ? 'text' : 'password';
+    });
+
+    // karakter
+    $('btnSaveChar').addEventListener('click', saveCharFromForm);
+    $('charName').addEventListener('input', () => {
+        if (!state.tagTouched) $('charTag').value = sanitizeTag($('charName').value);
+        updateAvatarPreview(); renderAvatarPresets();
+    });
+    $('charTag').addEventListener('input', () => { state.tagTouched = true; renderAvatarPresets(); });
+    $('charColor').addEventListener('input', updateAvatarPreview);
+    $('charAvatarUrl').addEventListener('input', e => { state.draftAvatar = e.target.value.trim(); updateAvatarPreview(); });
+    $('avatarPresets').addEventListener('click', e => {
+        const b = e.target.closest('[data-preset]');
+        if (!b) return;
+        state.draftAvatar = b.dataset.preset; $('charAvatarUrl').value = b.dataset.preset; updateAvatarPreview();
+    });
+    $('btnUploadAvatar').addEventListener('click', () => $('avatarFile').click());
+    $('avatarFile').addEventListener('change', async e => {
+        const f = e.target.files[0]; e.target.value = '';
+        if (!f) return;
+        try { state.draftAvatar = await resizeToDataUrl(f); $('charAvatarUrl').value = ''; updateAvatarPreview(); }
+        catch (err) { toast(err.message, 'error'); }
+    });
+    $('btnClearAvatar').addEventListener('click', () => { state.draftAvatar = ''; $('charAvatarUrl').value = ''; updateAvatarPreview(); });
+    $('btnTidyRules').addEventListener('click', e => tidyRules('charRules', e.currentTarget));
+    $('btnTidyGlobal').addEventListener('click', e => tidyRules('setGlobalRules', e.currentTarget));
+    $('btnPromptTemplate').addEventListener('click', () => {
+        const ta = $('charPrompt');
+        if (ta.value.trim() && !confirm('Tambahkan template ke akhir persona yang sudah ada?')) return;
+        ta.value = ta.value.trim() ? ta.value.trim() + '\n\n' + PROMPT_TEMPLATE : PROMPT_TEMPLATE;
+        ta.focus();
+    });
+
+    // input chat
+    const ta = $('userInput');
+    ta.addEventListener('input', () => { autosize(); updateMention(); });
+    ta.addEventListener('click', updateMention);
+    ta.addEventListener('keydown', e => {
+        const mn = state.mention;
+        if (mn.open) {
+            if (e.key === 'ArrowDown') { e.preventDefault(); mn.index = (mn.index + 1) % mn.items.length; return renderMention(); }
+            if (e.key === 'ArrowUp') { e.preventDefault(); mn.index = (mn.index - 1 + mn.items.length) % mn.items.length; return renderMention(); }
+            if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); return selectMention(mn.index); }
+            if (e.key === 'Escape') { e.preventDefault(); return closeMention(); }
+        }
+        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendUserMessage(); }
+    });
+    $('mentionList').addEventListener('mousedown', e => {
+        e.preventDefault();
+        const it = e.target.closest('[data-mention]');
+        if (it) selectMention(parseInt(it.dataset.mention, 10));
+    });
+    $('btnSend').addEventListener('click', () => { state.busy ? stopResponses() : sendUserMessage(); });
+    $('btnEmoji').addEventListener('click', e => { e.stopPropagation(); $('emojiPanel').classList.toggle('hidden'); });
+    $('btnCancelReply').addEventListener('click', cancelReply);
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#emojiPanel') && !e.target.closest('#btnEmoji')) closeEmoji();
+    });
+
+    // daftar pesan
+    $('messagesContainer').addEventListener('click', e => {
+        const b = e.target.closest('[data-action]');
+        if (!b) return;
+        const id = b.dataset.id;
+        switch (b.dataset.action) {
+            case 'reply': startReply(id); break;
+            case 'delete': deleteMessage(id); break;
+            case 'regen': regenerateLast(); break;
+            case 'retry': retryError(id); break;
+            case 'jump': jumpTo(id); break;
+            case 'rule-save-chars': saveRuleSuggestion(id, 'chars'); break;
+            case 'rule-save-global': saveRuleSuggestion(id, 'global'); break;
+            case 'rule-dismiss': deleteMessage(id); break;
+        }
+    });
+    $('messagesContainer').addEventListener('scroll', updateScrollBtn);
+    $('messagesContainer').addEventListener('input', e => {
+        const t = e.target;
+        if (t.matches && t.matches('[data-rule-edit]')) {
+            const m = state.chat.find(x => x.id === t.dataset.ruleEdit);
+            if (m) { m.text = t.value; persist(); }
+        }
+    });
+    $('scrollBottomBtn').addEventListener('click', () => {
+        const c = $('messagesContainer'); c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' });
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        ['settingsModal', 'charModal'].forEach(closeModal);
+        toggleSidebar(false); closeEmoji();
+    });
+    window.addEventListener('beforeunload', flushChat);
+}
+
+init();
+})();
+</script>
+</body>
+</html>
